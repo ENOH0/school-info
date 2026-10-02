@@ -14,6 +14,9 @@ import { apiError } from '../../core/api-error';
     <div class="bar">
       <div class="container bar-inner">
         <nav class="tabs">
+          @if (auth.isAdmin()) {
+            <a routerLink="/admin/overview" routerLinkActive="on">ภาพรวม</a>
+          }
           <a routerLink="/admin" [class.on]="isDataPage()">{{ auth.isAdmin() ? 'ข้อมูลรายฝ่าย' : 'ข้อมูลของฝ่าย' }}</a>
           @if (auth.isAdmin()) {
             <a routerLink="/admin/terms" routerLinkActive="on">ปีการศึกษา</a>
@@ -21,10 +24,10 @@ import { apiError } from '../../core/api-error';
           }
         </nav>
         <div class="me">
-          <span>
+          <a class="acct" routerLink="/admin/account" title="บัญชีของฉัน / เปลี่ยนรหัสผ่าน">
             <strong>{{ auth.user()?.displayName }}</strong>
             <small>{{ auth.isAdmin() ? 'ผู้ดูแลระบบ' : myDept() }}</small>
-          </span>
+          </a>
           <button class="btn ghost sm" (click)="logout()">ออกจากระบบ</button>
         </div>
       </div>
@@ -48,7 +51,8 @@ import { apiError } from '../../core/api-error';
     .tabs a:hover { background: #fff; color: var(--blue-700); }
     .tabs a.on { background: var(--blue-700); color: #fff; }
     .me { display: flex; align-items: center; gap: 12px; }
-    .me span { display: flex; flex-direction: column; line-height: 1.3; text-align: right; font-size: 14px; }
+    .me .acct { display: flex; flex-direction: column; line-height: 1.3; text-align: right; font-size: 14px; color: var(--ink); text-decoration: none; padding: 4px 10px; border-radius: 8px; }
+    .me .acct:hover { background: #fff; color: var(--blue-700); }
     .me small { color: var(--ink-2); }
     .page { padding-top: 24px; padding-bottom: 64px; }
   `,

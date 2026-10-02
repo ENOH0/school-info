@@ -2,6 +2,7 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { catchError, of } from 'rxjs';
 import { BookService } from '../../core/book.service';
+import { AuthService } from '../../core/auth.service';
 import { BookCover } from '../../shared/book-cover/book-cover';
 import { SITE } from '../../site.config';
 
@@ -13,6 +14,10 @@ import { SITE } from '../../site.config';
 })
 export class Home {
   site = SITE;
+
+  constructor() {
+    inject(AuthService).load(); // ถ้าล็อกอินอยู่ ปกที่รอเผยแพร่จะบอกสถานะให้
+  }
   loadError = signal(false);
   private books = toSignal(
     inject(BookService)

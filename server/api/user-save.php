@@ -64,6 +64,9 @@ db()->prepare(
 if ($password !== '') {
     db()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
         ->execute([password_hash($password, PASSWORD_DEFAULT), $id]);
+    // ตั้งรหัสใหม่ให้ = ปลดล็อกที่ใส่รหัสผิดหลายครั้ง (ทุกเครื่อง)
+    login_clear($username, null);
+    login_clear('pwchange:' . $id, null);
 }
 
 json_out(['ok' => true, 'id' => $id]);

@@ -2,7 +2,7 @@
 // หลักการ: ตัดข้อความเป็นชิ้น ๆ ชิ้นไหนตรงกับคำค้น ให้เลขลำดับไว้ (0, 1, 2, ...)
 // หน้าเว็บจะเอาชิ้นที่มีเลขไปทำไฮไลต์ และกระโดดไปทีละอันได้
 
-import { Book, Block } from './book.model';
+import { Book, Block, ChartBlock } from './book.model';
 
 /** ชิ้นข้อความ: i = -1 คือข้อความธรรมดา, i >= 0 คือคำที่ค้นเจอลำดับที่ i */
 export interface Seg {
@@ -13,7 +13,19 @@ export interface Seg {
 export type BlockView =
   | { type: 'p'; segs: Seg[] }
   | { type: 'img'; src: string; caption: Seg[]; alt: string }
-  | { type: 'table'; caption: Seg[] | null; head: { segs: Seg[]; num: boolean }[]; rows: { segs: Seg[]; num: boolean }[][] };
+  | { type: 'chart'; chart: ChartBlock }
+  | {
+      type: 'table';
+      caption: Seg[] | null;
+      head: { segs: Seg[]; num: boolean }[];
+      rows: Cell[][];
+      foot: Cell[] | null; // แถวรวม
+    };
+
+export interface Cell {
+  segs: Seg[];
+  num: boolean;
+}
 
 export interface SectionView {
   id: string;
@@ -57,8 +69,13 @@ function cellText(v: string | number): string {
   return typeof v === 'number' ? v.toLocaleString('th-TH') : v;
 }
 
+function cell(v: string | number, q: string, c: Counter): Cell {
+  return { segs: split(cellText(v), q, c), num: typeof v === 'number' };
+}
+
 function blockView(b: Block, q: string, c: Counter): BlockView {
   if (b.type === 'p') return { type: 'p', segs: split(b.text, q, c) };
+  if (b.type === 'chart') return { type: 'chart', chart: b };
   if (b.type === 'img') return { type: 'img', src: b.src, caption: split(b.caption, q, c), alt: b.caption };
   return {
     type: 'table',
@@ -70,7 +87,8 @@ function blockView(b: Block, q: string, c: Counter): BlockView {
         b.rows.some((r) => typeof r[col] === 'number') &&
         b.rows.every((r) => typeof r[col] === 'number' || r[col] === ''),
     })),
-    rows: b.rows.map((r) => r.map((v) => ({ segs: split(cellText(v), q, c), num: typeof v === 'number' }))),
+    rows: b.rows.map((r) => r.map((v) => cell(v, q, c))),
+    foot: b.foot ? b.foot.map((v) => cell(v, q, c)) : null,
   };
 }
 

@@ -1,0 +1,30 @@
+# ===== ไฟล์นี้อยู่ในโฟลเดอร์หลักของเว็บ (ข้าง index.html) =====
+# 1) กด F5 หรือเปิดลิงก์ตรง เช่น .../book/2 แล้วไม่ขึ้น 404 (ส่งต่อไปให้ Angular)
+# 2) ไม่ให้เปิดดูรายชื่อไฟล์ในโฟลเดอร์
+# 3) index.html ห้ามจำไว้ในแคช จะได้เห็นเวอร์ชันใหม่ทันทีหลังอัปเดต
+
+Options -Indexes
+DirectoryIndex index.html
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    # api/ และ uploads/ ไม่ต้องส่งต่อ
+    RewriteRule ^(api|uploads)(/|$) - [L]
+    # มีไฟล์หรือโฟลเดอร์นั้นจริง ใช้ตามปกติ
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    # นอกนั้นให้ Angular จัดการ
+    RewriteRule ^ index.html [L]
+</IfModule>
+
+<IfModule mod_headers.c>
+    <Files "index.html">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </Files>
+</IfModule>
+
+# ไฟล์ตั้งค่าหรือไฟล์สำรองที่หลุดมา ห้ามเปิดจากเว็บ
+<FilesMatch "\.(sql|md|bak|log|ini|sh|bat)$|^config\.example\.php$">
+    Require all denied
+</FilesMatch>

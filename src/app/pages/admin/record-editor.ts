@@ -6,6 +6,7 @@ import { AdminState } from '../../core/admin-state.service';
 import { Column, ImageItem, RecordResponse, Row, periodLabel } from '../../core/admin.model';
 import { firstValueFrom } from 'rxjs';
 import { apiError } from '../../core/api-error';
+import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc';
 
 // หน้ากรอกข้อมูลของหัวข้อ ในภาคเรียนที่เลือก   /admin/topics/5/data
 // ตาราง: กรอกทีละช่อง หรือคัดลอกจาก Excel มาวาง | ความเรียง: พิมพ์ข้อความ
@@ -38,8 +39,24 @@ import { apiError } from '../../core/api-error';
         </label>
       </div>
 
-      @if (!t.canEdit) {
+      @if (res()!.locked) {
+        <p class="alert lockmsg">🔒 เล่มที่มีข้อมูลนี้<strong>เผยแพร่แล้ว</strong> แก้ไขไม่ได้ (ให้ผู้ดูแลระบบยกเลิกเผยแพร่ก่อน)</p>
+      } @else if (!t.canEdit) {
         <p class="alert info">ดูได้อย่างเดียว แก้ไขได้เฉพาะหัวข้อของฝ่ายตัวเอง</p>
+      }
+
+      @if (t.canEdit && res()!.data?.copiedFrom) {
+        <p class="alert copied">
+          ⚠ ข้อมูลนี้<strong>คัดลอกมาจาก{{ res()!.data!.copiedFrom }}</strong> ยังไม่ได้ตรวจ
+          แก้ให้เป็นข้อมูลปัจจุบันแล้วกด "บันทึก" (ถ้าข้อมูลเหมือนเดิมก็กดบันทึกได้เลย)
+        </p>
+      } @else if (t.canEdit && res()!.previous && !res()!.updatedAt) {
+        <div class="alert prev">
+          <span>ภาคเรียนนี้ยังไม่มีข้อมูล · มีข้อมูลครั้งก่อนของ<strong>{{ prevLabel() }}</strong></span>
+          <button class="btn primary sm" (click)="pullPrevious()" [disabled]="pulling()">
+            {{ pulling() ? 'กำลังดึง…' : 'ดึงข้อมูลครั้งก่อนมาแก้ต่อ' }}
+          </button>
+        </div>
       }
 
       @if (t.kind === 'text') {
@@ -52,7 +69,9 @@ import { apiError } from '../../core/api-error';
               <tr>
                 <th class="no">#</th>
                 @for (c of t.columns; track c.key) {
-                  <th [class.numcol]="c.type === 'number'">{{ c.label }}</th>
+                  <th [class.numcol]="c.type !== 'text'" [title]="c.type === 'sum' ? 'คำนวณอัตโนมัติ ไม่ต้องกรอก' : ''">
+                    {{ c.label }}@if (c.type === 'sum') { <span class="auto">Σ</span> }
+                  </th>
                 }
                 @if (t.canEdit) { <th class="no"></th> }
               </tr>
@@ -62,12 +81,16 @@ import { apiError } from '../../core/api-error';
                 <tr>
                   <td class="no">{{ i + 1 }}</td>
                   @for (c of t.columns; track c.key) {
+                    @if (c.type === 'sum') {
+                      <td class="calc">{{ fmt(sumOf(c, r)) }}</td>
+                    } @else {
                     <td>
                       <input class="cell" [class.numcol]="c.type === 'number'" [name]="'r' + i + c.key"
                         [(ngModel)]="r[c.key]" (ngModelChange)="dirty.set(true)" [disabled]="!t.canEdit"
                         [attr.inputmode]="c.type === 'number' ? 'decimal' : null"
                         [attr.aria-label]="c.label + ' แถวที่ ' + (i + 1)" />
                     </td>
+                    }
                   }
                   @if (t.canEdit) {
                     <td class="no"><button class="del" (click)="removeRow(i)" aria-label="ลบแถว">✕</button></td>
@@ -75,6 +98,18 @@ import { apiError } from '../../core/api-error';
                 </tr>
               }
             </tbody>
+            @if (showTotal() && rows().length) {
+              @let tot = totals();
+              <tfoot>
+                <tr>
+                  <td class="no"></td>
+                  @for (c of t.columns; track c.key) {
+                    <td class="calc" [class.lbl]="c.type === 'text'">{{ fmt(tot[c.key]) }}</td>
+                  }
+                  @if (t.canEdit) { <td class="no"></td> }
+                </tr>
+              </tfoot>
+            }
           </table>
         </div>
 
@@ -83,6 +118,9 @@ import { apiError } from '../../core/api-error';
             <button class="btn ghost sm" (click)="addRows(1)">+ เพิ่มแถว</button>
             <button class="btn ghost sm" (click)="addRows(5)">+ 5 แถว</button>
             <button class="btn ghost sm" (click)="showPaste.set(!showPaste())">วางข้อมูลจาก Excel</button>
+            @if (res()!.previous && res()!.updatedAt) {
+              <button class="btn ghost sm" (click)="pullPrevious()" [disabled]="pulling()">ดึงข้อมูล{{ prevLabel() }}</button>
+            }
           </div>
           @if (showPaste()) {
             <div class="paste card">
@@ -178,6 +216,10 @@ import { apiError } from '../../core/api-error';
     .cell.numcol { text-align: right; font-variant-numeric: tabular-nums; }
     .cell:focus { outline: 2px solid var(--blue-600); outline-offset: -2px; background: #fff; }
     .cell:disabled { color: var(--ink); }
+    .grid td.calc { padding: 9px 10px; text-align: right; font-variant-numeric: tabular-nums; background: #f8fafc; color: var(--blue-900); font-weight: 600; white-space: nowrap; }
+    .grid td.calc.lbl { text-align: left; }
+    .grid tfoot td, .grid tfoot td.calc { border-top: 2px solid var(--blue-100); background: var(--blue-50); font-weight: 700; }
+    .auto { font-size: 12px; color: var(--sky-500); margin-left: 2px; }
     .del { border: 0; background: none; color: var(--ink-2); cursor: pointer; width: 28px; height: 28px; border-radius: 50%; }
     .del:hover { background: #fef2f2; color: #b91c1c; }
     .tools { margin-top: 10px; }
@@ -187,6 +229,9 @@ import { apiError } from '../../core/api-error';
     .alert.info { background: var(--blue-50); color: var(--blue-900); margin: 0 0 12px; }
     .footer { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding: 12px 0; background: rgb(255 255 255 / 0.95); border-top: 1px solid var(--line); }
     .unsaved { color: #b45309; }
+    .alert.copied { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
+    .alert.prev { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--blue-50); color: var(--blue-900); margin: 0 0 12px; }
+    .alert.lockmsg { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
     .images { margin-top: 20px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); }
     .images-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
     .upload { margin-left: auto; cursor: pointer; }
@@ -217,12 +262,25 @@ export class RecordEditor {
   dirty = signal(false);
   showPaste = signal(false);
   confirmClear = signal(false);
+  pulling = signal(false);
   label = periodLabel;
+
+  prevLabel = computed(() => {
+    const p = this.res()?.previous;
+    return p ? (p.term === 0 ? `ปีการศึกษา ${p.academicYear}` : `ภาคเรียนที่ ${p.term}/${p.academicYear}`) : '';
+  });
 
   period = computed(() => {
     const r = this.res();
     return r ? periodLabel(r.academicYear, r.term) : '';
   });
+  sumOf = rowSum;
+  fmt = formatNumber;
+  showTotal = computed(() => hasTotal(this.res()?.topic.columns ?? []));
+  /** เรียกจาก template ทุกครั้งที่หน้าจอวาดใหม่ (ค่าในช่องเปลี่ยนผ่าน ngModel ไม่ใช่ signal) */
+  totals() {
+    return totalRow(this.res()!.topic.columns, this.rows());
+  }
   colNames = computed(() => (this.res()?.topic.columns ?? []).map((c) => c.label).join(', '));
 
   constructor() {
@@ -249,7 +307,8 @@ export class RecordEditor {
         // ตารางว่าง: เตรียมแถวว่างให้ 3 แถว
         this.rows.set(rows.length || !r.topic.canEdit ? rows : [1, 2, 3].map(() => this.blankRow(r.topic.columns)));
         this.dirty.set(false);
-        this.res.set(r);
+        // เล่มเผยแพร่แล้ว = ดูได้อย่างเดียว
+        this.res.set(r.locked ? { ...r, topic: { ...r.topic, canEdit: false } } : r);
       },
       error: (e) => this.loadError.set(apiError(e)),
     });
@@ -326,20 +385,52 @@ export class RecordEditor {
       });
   }
 
+  /** ดึงข้อมูลครั้งก่อนมาใส่ในฟอร์ม (ยังไม่บันทึก จนกว่าจะกด "บันทึก") */
+  async pullPrevious() {
+    const r = this.res()!;
+    const p = r.previous;
+    if (!p) return;
+    const hasContent =
+      this.dirty() ||
+      this.text.trim() !== '' ||
+      this.images().length > 0 ||
+      this.rows().some((row) => Object.values(row).some((v) => v !== '' && v !== null));
+    if (hasContent && !confirm(`แทนที่ข้อมูลในหน้านี้ด้วยข้อมูลของ${this.prevLabel()}?`)) {
+      return;
+    }
+    this.pulling.set(true);
+    this.message.set('');
+    try {
+      const old = await firstValueFrom(this.api.record(r.topic.id, p.academicYear, p.term));
+      const cols = r.topic.columns;
+      this.text = old.data?.text ?? '';
+      this.rows.set((old.data?.rows ?? []).map((row) => this.blankRow(cols, row)));
+      if (!this.rows().length && r.topic.kind === 'table') this.addRows(3);
+      this.images.set((old.data?.images ?? []).map((x) => ({ ...x })));
+      this.dirty.set(true);
+      this.show(`ดึงข้อมูลของ${this.prevLabel()}มาแล้ว แก้ให้เป็นข้อมูลปัจจุบันแล้วกด "บันทึก"`, false);
+    } catch (e) {
+      this.show(apiError(e), true);
+    } finally {
+      this.pulling.set(false);
+    }
+  }
+
   // ===== รูปแนบ =====
 
   /** เลือกรูปแล้วย่อในเบราว์เซอร์ก่อนส่ง (ด้านยาวไม่เกิน 1600px) จะได้อัปโหลดเร็วและไม่ติดขนาดไฟล์ของเซิร์ฟเวอร์ */
   async addImages(input: HTMLInputElement) {
     const files = Array.from(input.files ?? []);
     input.value = '';
-    const topicId = this.res()!.topic.id;
+    const r = this.res()!;
+    const topicId = r.topic.id;
     this.message.set('');
     this.isError.set(false);
     for (const f of files) {
       this.uploading.update((n) => n + 1);
       try {
         const blob = await shrinkImage(f, 1600);
-        const out = await firstValueFrom(this.api.uploadImage(topicId, blob, f.name.replace(/\.\w+$/, '') + '.jpg'));
+        const out = await firstValueFrom(this.api.uploadImage(topicId, r.academicYear, r.term, blob, f.name.replace(/\.\w+$/, '') + '.jpg'));
         this.images.update((list) => [...list, { file: out.file, caption: '' }]);
         this.dirty.set(true);
       } catch (e) {

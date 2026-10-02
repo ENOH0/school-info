@@ -17,6 +17,8 @@ json_out([
     'kind'         => $t['kind'],
     'frequency'    => $t['frequency'],
     'columns'      => topic_columns($t),
+    'chart'        => topic_chart($t),
     'recordCount'  => (int) $cnt->fetchColumn(),
     'canEdit'      => can_edit_department($me, $t['department_id']),
+    'structureLocked' => topic_locked($t['id']),
 ]);

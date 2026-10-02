@@ -12,6 +12,10 @@ import { apiError } from '../../core/api-error';
   template: `
     <h1 class="page-title">ปีการศึกษาและภาคเรียน</h1>
     <p class="muted">เพิ่มภาคเรียนใหม่ก่อนเปิดให้ฝ่ายต่าง ๆ กรอกข้อมูล ภาคเรียน "ปัจจุบัน" จะถูกเลือกไว้ให้อัตโนมัติ</p>
+    <p class="muted">
+      <strong>เผยแพร่</strong> = เล่มขึ้นหน้าสาธารณะให้คนนอกเห็น และ<strong>ล็อก</strong> ฝ่ายต่าง ๆ แก้ข้อมูลของภาคเรียนนั้นไม่ได้
+      (ข้อมูลรายปีของปีนั้นถูกล็อกด้วย) ถ้าต้องแก้ ให้กด "ยกเลิกเผยแพร่" ก่อน
+    </p>
 
     <form class="card add row-gap" (ngSubmit)="add()">
       <label class="field">ปีการศึกษา
@@ -33,12 +37,37 @@ import { apiError } from '../../core/api-error';
     <ul class="list">
       @for (t of terms(); track t.id) {
         <li class="item">
-          <span>{{ label(t.academicYear, t.term) }}</span>
-          @if (t.isCurrent) {
-            <span class="badge">ภาคเรียนปัจจุบัน</span>
-          } @else {
-            <button class="btn ghost sm" (click)="setCurrent(t.id)" [disabled]="busy()">ตั้งเป็นปัจจุบัน</button>
-          }
+          <span class="name">
+            {{ label(t.academicYear, t.term) }}
+            @if (t.isPublished) {
+              <span class="pub">● เผยแพร่แล้ว</span>
+              <small class="muted">{{ t.publishedAt }}</small>
+            } @else {
+              <span class="draft">○ ยังไม่เผยแพร่</span>
+            }
+          </span>
+          <span class="acts">
+            @if (t.isCurrent) {
+              <span class="badge">ภาคเรียนปัจจุบัน</span>
+            } @else {
+              <button class="btn ghost sm" (click)="setCurrent(t.id)" [disabled]="busy()">ตั้งเป็นปัจจุบัน</button>
+            }
+            @if (t.isPublished) {
+              @if (confirmId() === t.id) {
+                <button class="btn danger sm" (click)="publish(t.id, false)" [disabled]="busy()">ยืนยันยกเลิกเผยแพร่</button>
+                <button class="btn ghost sm" (click)="confirmId.set(0)">ไม่ยกเลิก</button>
+              } @else {
+                <button class="btn ghost sm" (click)="confirmId.set(t.id)" [disabled]="busy()">ยกเลิกเผยแพร่</button>
+              }
+            } @else {
+              @if (confirmId() === t.id) {
+                <button class="btn primary sm" (click)="publish(t.id, true)" [disabled]="busy()">ยืนยันเผยแพร่และล็อก</button>
+                <button class="btn ghost sm" (click)="confirmId.set(0)">ไม่ใช่ตอนนี้</button>
+              } @else {
+                <button class="btn primary sm" (click)="confirmId.set(t.id)" [disabled]="busy()">เผยแพร่</button>
+              }
+            }
+          </span>
         </li>
       } @empty {
         <li class="item muted">ยังไม่มีภาคเรียน</li>
@@ -48,8 +77,12 @@ import { apiError } from '../../core/api-error';
   styles: `
     .add { margin: 16px 0; max-width: 560px; }
     .add .input { width: 140px; }
-    .list { list-style: none; padding: 0; margin: 16px 0 0; max-width: 560px; }
-    .item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+    .list { list-style: none; padding: 0; margin: 16px 0 0; max-width: 760px; }
+    .item { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+    .name { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+    .acts { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    .pub { font-size: 13px; font-weight: 600; color: #047857; }
+    .draft { font-size: 13px; color: var(--ink-2); }
     p.alert { max-width: 560px; }
   `,
 })
@@ -68,6 +101,13 @@ export class TermsPage {
 
   add() {
     this.run(this.api.addTerm(Number(this.year), this.term), `เพิ่มภาคเรียน ${this.term}/${this.year} แล้ว`);
+  }
+
+  confirmId = signal(0);
+
+  publish(id: number, on: boolean) {
+    this.confirmId.set(0);
+    this.run(this.api.publishTerm(id, on), on ? 'เผยแพร่แล้ว เล่มขึ้นหน้าสาธารณะและล็อกการแก้ไข' : 'ยกเลิกเผยแพร่แล้ว ฝ่ายต่าง ๆ แก้ไขได้อีกครั้ง');
   }
 
   setCurrent(id: number) {

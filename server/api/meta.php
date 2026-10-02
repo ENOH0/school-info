@@ -13,7 +13,9 @@ $terms = array_map(function ($t) {
         'academicYear' => (int) $t['academic_year'],
         'term'         => (int) $t['term'],
         'isCurrent'    => (int) $t['is_current'] === 1,
+        'isPublished'  => (int) $t['is_published'] === 1,
+        'publishedAt'  => $t['published_at'],
     ];
-}, db()->query('SELECT id, academic_year, term, is_current FROM terms ORDER BY academic_year DESC, term DESC')->fetchAll());
+}, db()->query('SELECT id, academic_year, term, is_current, is_published, published_at FROM terms ORDER BY academic_year DESC, term DESC')->fetchAll());
 
 json_out(['departments' => $departments, 'terms' => $terms]);

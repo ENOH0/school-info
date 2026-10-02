@@ -21,6 +21,8 @@ if ($topic['frequency'] === 'term' && $term === 0) {
     fail('หัวข้อรายภาคเรียนต้องเลือกภาคเรียนที่ 1 หรือ 2');
 }
 
+require_period_unlocked($year, $term);
+
 $chk = db()->prepare('SELECT COUNT(*) FROM terms WHERE academic_year = ? AND term = ?');
 $chk->execute([$year, $term]);
 if (!(int) $chk->fetchColumn()) {
@@ -50,6 +52,9 @@ if ($topic['kind'] === 'text') {
         $row = [];
         $hasValue = false;
         foreach ($columns as $c) {
+            if ($c['type'] === 'sum') {
+                continue; // คอลัมน์ผลรวม คำนวณเองตอนแสดงผล ไม่ต้องเก็บ
+            }
             $v = isset($raw[$c['key']]) ? $raw[$c['key']] : null;
             if ($v === '' || $v === null) {
                 $row[$c['key']] = null;

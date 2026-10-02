@@ -5,13 +5,17 @@ import { BookService } from '../../core/book.service';
 import { SectionView, buildView } from '../../core/search';
 import { Hl } from '../../shared/hl/hl';
 
+import { Chart } from '../../shared/chart/chart';
+import { SITE } from '../../site.config';
+import { downloadBook, downloadTable } from '../../core/book-export';
+import { TableBlock } from '../../core/book.model';
 @Component({
   selector: 'app-book',
-  imports: [RouterLink, Hl],
+  imports: [RouterLink, Hl, Chart],
   templateUrl: './book.html',
   styleUrl: './book.scss',
   // กด Ctrl+F ที่ไหนก็ได้ในหน้านี้ จะมาที่ช่องค้นหาของเรา
-  host: { '(window:keydown)': 'onWindowKey($event)' },
+  host: { '(window:keydown)': 'onWindowKey($event)', '(window:beforeprint)': 'onBeforePrint()' },
 })
 export class BookPage {
   // id มาจาก URL /book/:id (เปิดใช้ด้วย withComponentInputBinding ใน app.config.ts)
@@ -24,6 +28,8 @@ export class BookPage {
   book = signal<Book | null>(null);
   error = signal(false);
 
+  site = SITE;
+  printedAt = signal('');
   query = signal(''); // คำค้น
   current = signal(0); // ตอนนี้อยู่ที่คำที่เจอลำดับไหน
 
@@ -94,6 +100,34 @@ export class BookPage {
       this.current.set(start);
     } else {
       document.getElementById('sec-' + s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+  /** พิมพ์ / บันทึก PDF: ล้างไฮไลต์คำค้นก่อน แล้วเปิดหน้าต่างพิมพ์ของเบราว์เซอร์ (หน้าตาตอนพิมพ์อยู่ใน print.scss) */
+  print() {
+    this.printedAt.set(new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }));
+    this.query.set('');
+    setTimeout(() => window.print(), 150);
+  }
+
+  /** ดาวน์โหลด Excel ทั้งเล่ม (ตารางละ 1 แท็บ) */
+  exportExcel() {
+    const b = this.book();
+    if (b) downloadBook(b);
+  }
+
+  /** ดาวน์โหลด Excel เฉพาะตารางเดียว (i = ลำดับหัวข้อ, j = ลำดับเนื้อหาในหัวข้อ) */
+  exportTable(i: number, j: number) {
+    const b = this.book();
+    const s = b?.sections[i];
+    const blk = s?.blocks[j];
+    if (b && s && blk?.type === 'table') downloadTable(b, s, blk as TableBlock);
+  }
+
+  /** กด Ctrl+P เอง ก็ใส่วันที่บนปกให้ */
+  onBeforePrint() {
+    if (!this.printedAt()) {
+      this.printedAt.set(new Date().toLocaleDateString('th-TH', { day: 'numeric', month: 'long', year: 'numeric' }));
     }
   }
 

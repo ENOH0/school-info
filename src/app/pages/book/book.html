@@ -8,6 +8,31 @@
 } @else {
   @let b = book()!;
 
+  <!-- ===== เฉพาะตอนพิมพ์ / บันทึก PDF: หน้าปก + สารบัญ ===== -->
+  <section class="print-cover">
+    @if (site.logo) {
+      <img class="pc-logo" [src]="site.logo" alt="" />
+    }
+    <div class="pc-school">{{ site.schoolName }}</div>
+    <div class="pc-title">{{ b.title }}</div>
+    <div class="pc-sub">ปีการศึกษา {{ b.academicYear }} · {{ label() }}</div>
+    @if (b.published === false) {
+      <div class="pc-draft">ฉบับร่าง (ยังไม่เผยแพร่)</div>
+    }
+    <div class="pc-date">พิมพ์เมื่อ {{ printedAt() }}</div>
+  </section>
+  @if (view()!.sections.length) {
+    <section class="print-toc">
+      <h2>สารบัญ</h2>
+      @for (s of view()!.sections; track s.id; let i = $index) {
+        @if (s.group && (i === 0 || s.group !== view()!.sections[i - 1].group)) {
+          <div class="pt-group">{{ s.group }}</div>
+        }
+        <div class="pt-item">{{ s.titleText }}</div>
+      }
+    </section>
+  }
+
   <!-- หัวเล่ม -->
   <section class="book-head">
     <div class="container head-inner">
@@ -16,6 +41,10 @@
       <div class="head-meta">
         <span class="badge">ปีการศึกษา {{ b.academicYear }}</span>
         <span class="badge">{{ label() }}</span>
+        @if (b.sections.length) {
+          <button class="btn ghost pdf" (click)="exportExcel()" title="ทุกตารางในเล่ม แยกแท็บละตาราง">⬇ Excel ทั้งเล่ม</button>
+          <button class="btn ghost pdf" (click)="print()" title="เลือกเครื่องพิมพ์ หรือเลือก &quot;บันทึกเป็น PDF&quot;">🖨 พิมพ์ / บันทึก PDF</button>
+        }
         @if (b.pdfUrl) {
           <a class="btn ghost pdf" [href]="b.pdfUrl" target="_blank" rel="noopener">ดาวน์โหลด PDF</a>
         }
@@ -53,6 +82,12 @@
     </div>
   </div>
 
+  @if (b.published === false && b.sections.length) {
+    <div class="container">
+      <p class="notice">👁 <strong>ตัวอย่างก่อนเผยแพร่</strong> เล่มนี้ยังไม่เผยแพร่ เห็นได้เฉพาะผู้ที่เข้าสู่ระบบ คนทั่วไปจะเห็นเป็น "กำลังรวบรวมข้อมูล"</p>
+    </div>
+  }
+
   @if (b.sample) {
     <div class="container">
       <p class="notice">เล่มนี้เป็น <strong>ข้อมูลตัวอย่าง</strong> สำหรับทดสอบหน้าเว็บ ตัวเลขและข้อความทั้งหมดไม่ใช่ข้อมูลจริง</p>
@@ -80,15 +115,17 @@
 
     <!-- เนื้อหา -->
     <article class="content">
-      @for (s of view()!.sections; track s.id) {
-        <section class="sec" [id]="'sec-' + s.id">
+      @for (s of view()!.sections; track s.id; let i = $index) {
+        <section class="sec" [id]="'sec-' + s.id" [class.newgroup]="i > 0 && s.group !== view()!.sections[i - 1].group">
           @if (s.group) {
             <div class="sec-group">{{ s.group }}</div>
           }
           <h2><app-hl [segs]="s.title" [current]="current()" /></h2>
-          @for (blk of s.blocks; track $index) {
+          @for (blk of s.blocks; track $index; let j = $index) {
             @if (blk.type === 'p') {
               <p><app-hl [segs]="blk.segs" [current]="current()" /></p>
+            } @else if (blk.type === 'chart') {
+              <app-chart [data]="blk.chart" />
             } @else if (blk.type === 'img') {
               <figure class="fig">
                 <a [href]="blk.src" target="_blank" rel="noopener"><img [src]="blk.src" [alt]="blk.alt" loading="lazy" /></a>
@@ -118,7 +155,19 @@
                       </tr>
                     }
                   </tbody>
+                  @if (blk.foot) {
+                    <tfoot>
+                      <tr>
+                        @for (cell of blk.foot; track $index) {
+                          <td [class.num]="cell.num"><app-hl [segs]="cell.segs" [current]="current()" /></td>
+                        }
+                      </tr>
+                    </tfoot>
+                  }
                 </table>
+              </div>
+              <div class="xl-row">
+                <button class="xl-btn" (click)="exportTable(i, j)">⬇ ดาวน์โหลดตารางนี้ (Excel)</button>
               </div>
             }
           }

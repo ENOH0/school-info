@@ -49,3 +49,6 @@ Thumbs.db
 # รูปที่ผู้ใช้อัปโหลด
 /server/uploads/*
 !/server/uploads/.htaccess
+
+# ชุดไฟล์ขึ้นเซิร์ฟเวอร์ (สร้างใหม่ทุกครั้งด้วย deploy.bat)
+/deploy

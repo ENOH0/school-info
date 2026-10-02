@@ -2,19 +2,35 @@
 
 โฟลเดอร์นี้คือต้นฉบับของไฟล์ที่ใช้งานจริงใน `C:\xampp7.4\htdocs\school-info`
 
-| โฟลเดอร์ | เนื้อหา |
+| ไฟล์/โฟลเดอร์ | เนื้อหา |
 |---|---|
 | `api/` | ไฟล์ PHP ทั้งหมด (PHP 7.4 ขึ้นไป) |
-| `database/` | ไฟล์ SQL สำหรับ import ใน phpMyAdmin |
+| `api/check.php` | หน้าตรวจความพร้อมของเซิร์ฟเวอร์ |
+| `database/install.sql` | สร้างฐานข้อมูลใหม่ทั้งหมดในไฟล์เดียว (ใช้ติดตั้งครั้งแรก) |
+| `database/*.sql` อื่น ๆ | ไฟล์ทีละขั้นที่ใช้ตอนพัฒนา + ข้อมูลตัวอย่าง |
 | `uploads/` | ที่เก็บรูปที่อัปโหลด (ใน git มีแค่ `.htaccess`) |
+| `.htaccess` | วางที่โฟลเดอร์หลักของเว็บบนเซิร์ฟเวอร์ (deploy.bat คัดลอกให้) |
+| `DEPLOY.md` | ขั้นตอนขึ้นเซิร์ฟเวอร์โรงเรียน |
 
-## ติดตั้งในเครื่องใหม่
+## ติดตั้งในเครื่องใหม่ (สำหรับพัฒนา)
 
 1. คัดลอก `api/` และ `uploads/` ไปไว้ที่ `htdocs/school-info/`
 2. คัดลอก `api/config.example.php` เป็น `api/config.php` แล้วแก้ชื่อฐานข้อมูล ผู้ใช้ และรหัสผ่าน
-3. phpMyAdmin: สร้างฐานข้อมูล `school_info` (utf8mb4_unicode_ci) แล้ว import ตามลำดับ
-   1. `database/core.sql`
-   2. `database/topics.sql`
-   3. `database/chapters.sql`
-   4. `database/sample-data-full.sql` (ข้อมูลตัวอย่าง ไม่บังคับ)
+3. phpMyAdmin: สร้างฐานข้อมูล `school_info` (utf8mb4_unicode_ci) แล้ว import `database/install.sql`
+   - ถ้าอยากได้ข้อมูลตัวอย่าง import `database/sample-data-full.sql` ต่อ
 4. เปิดหน้าเว็บ แล้วสร้างบัญชีผู้ดูแลระบบในหน้า "ตั้งค่าครั้งแรก"
+
+## ไฟล์อัปเกรดฐานข้อมูล
+
+ฐานข้อมูลที่ติดตั้งไว้ก่อน ให้ import เฉพาะไฟล์ที่ยังไม่เคย import ตามลำดับ (ไฟล์ละครั้งเดียว)
+
+1. `database/chapters.sql` — หมวดในเล่ม
+2. `database/publish.sql` — ระบบเผยแพร่/ล็อก
+3. `database/charts.sql` — กราฟในเล่ม
+4. `database/security.sql` — กันการเดารหัสผ่าน
+
+ติดตั้งใหม่จาก `install.sql` มีครบทุกข้อแล้ว ไม่ต้อง import ไฟล์อัปเกรด
+
+## ขึ้นเซิร์ฟเวอร์โรงเรียน
+
+ดู `DEPLOY.md`

@@ -9,6 +9,7 @@ $topic = find_topic(isset($in['id']) ? (int) $in['id'] : 0);
 if (!can_edit_department($me, $topic['department_id'])) {
     fail('แก้ไขได้เฉพาะหัวข้อของฝ่ายตัวเอง', 403);
 }
+require_topic_unlocked($topic['id']);
 $up = isset($in['direction']) && $in['direction'] === 'up';
 
 // เรียงลำดับใหม่ทั้งฝ่ายเป็น 1, 2, 3, ... แล้วสลับกับตัวข้าง ๆ

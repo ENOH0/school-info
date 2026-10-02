@@ -2,12 +2,27 @@
 // เพิ่มปีการศึกษา/ภาคเรียน หรือตั้งเป็นภาคเรียนปัจจุบัน (เฉพาะผู้ดูแลระบบ)
 // เพิ่ม:          {"academicYear": 2570, "term": 1}
 // ตั้งปัจจุบัน:   {"id": 5, "setCurrent": true}
+// เผยแพร่:        {"id": 5, "publish": true}   ยกเลิกเผยแพร่: {"id": 5, "publish": false}
 require __DIR__ . '/lib.php';
 require_method('POST');
 require_admin();
 
 $in = read_json();
 $pdo = db();
+
+if (!empty($in['id']) && array_key_exists('publish', $in)) {
+    $pub = $in['publish'] ? 1 : 0;
+    $stmt = $pdo->prepare('UPDATE terms SET is_published = ?, published_at = ? WHERE id = ? AND term > 0');
+    $stmt->execute([$pub, $pub ? now_str() : null, (int) $in['id']]);
+    if ($stmt->rowCount() === 0) {
+        $chk = $pdo->prepare('SELECT COUNT(*) FROM terms WHERE id = ? AND term > 0');
+        $chk->execute([(int) $in['id']]);
+        if (!(int) $chk->fetchColumn()) {
+            fail('ไม่พบภาคเรียนนี้', 404);
+        }
+    }
+    json_out(['ok' => true]);
+}
 
 if (!empty($in['id']) && !empty($in['setCurrent'])) {
     $pdo->beginTransaction();

@@ -17,6 +17,9 @@ $stmt = db()->prepare(
 $stmt->execute([(int) $topic['id'], $year, $term]);
 $r = $stmt->fetch();
 
+// ข้อมูลครั้งก่อน (ให้กด "ดึงข้อมูลครั้งก่อน" มาใช้ต่อได้)
+$prev = previous_record($topic['id'], $year, $term);
+
 json_out([
     'topic' => [
         'id'           => (int) $topic['id'],
@@ -28,8 +31,10 @@ json_out([
         'canEdit'      => can_edit_department($me, $topic['department_id']),
     ],
     'academicYear'  => $year,
+    'locked'        => period_locked($year, $term),
     'term'          => $term,
     'data'          => $r ? json_decode($r['data_json'], true) : null,
     'updatedAt'     => $r ? $r['updated_at'] : null,
     'updatedByName' => $r ? $r['updated_by_name'] : null,
+    'previous'      => $prev ? ['academicYear' => (int) $prev['academic_year'], 'term' => (int) $prev['term']] : null,
 ]);

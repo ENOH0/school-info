@@ -9,7 +9,7 @@ $year   = isset($_GET['year']) ? (int) $_GET['year'] : 0;
 $term   = isset($_GET['term']) ? (int) $_GET['term'] : 0;
 
 $stmt = db()->prepare(
-    'SELECT t.*, r.updated_at, u.display_name AS updated_by_name
+    'SELECT t.*, r.updated_at, r.data_json, u.display_name AS updated_by_name
        FROM topics t
        LEFT JOIN records r
               ON r.topic_id = t.id
@@ -23,8 +23,10 @@ $stmt->execute([$year, $term, $deptId]);
 
 require_department_access($me, $deptId);
 $canEdit = true;
+$lockTerm = period_locked($year, $term);  // ล็อกหัวข้อรายภาคเรียน
+$lockYear = period_locked($year, 0);      // ล็อกหัวข้อรายปี
 
-json_out(array_map(function ($t) use ($canEdit) {
+json_out(array_map(function ($t) use ($canEdit, $lockTerm, $lockYear) {
     return [
         'id'            => (int) $t['id'],
         'departmentId'  => (int) $t['department_id'],
@@ -36,6 +38,9 @@ json_out(array_map(function ($t) use ($canEdit) {
         'hasData'       => $t['updated_at'] !== null,
         'updatedAt'     => $t['updated_at'],
         'updatedByName' => $t['updated_by_name'],
+        'copiedFrom'    => copied_from($t['data_json']),
         'canEdit'       => $canEdit,
+        'locked'          => $t['frequency'] === 'year' ? $lockYear : $lockTerm,
+        'structureLocked' => topic_locked($t['id']),
     ];
 }, $stmt->fetchAll()));

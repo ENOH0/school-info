@@ -1,5 +1,5 @@
 <a class="cover-link" [routerLink]="['/book', book().id]" [attr.aria-label]="book().title + ' ' + label()">
-  <div class="book" [class.pending]="book().hasData === false">
+  <div class="book" [class.pending]="pending()">
     @if (book().coverImage) {
       <img class="face" [src]="book().coverImage" alt="" />
     } @else {
@@ -18,16 +18,16 @@
         <div class="term">{{ label() }}</div>
       </div>
     }
-    @if (book().hasData === false) {
-      <div class="ribbon">กำลังรวบรวมข้อมูล</div>
+    @if (pending()) {
+      <div class="ribbon">{{ ribbon() }}</div>
     }
   </div>
   <div class="meta">
     <div class="title">{{ book().title }}</div>
     <div class="sub">
       <span class="badge">{{ label() }}</span>
-      @if (book().hasData === false) {
-        <span class="sample">ยังไม่มีข้อมูล</span>
+      @if (pending()) {
+        <span class="sample">{{ ribbon() === 'รอเผยแพร่' ? 'มีข้อมูลแล้ว รอผู้ดูแลระบบเผยแพร่' : 'ยังไม่เผยแพร่' }}</span>
       }
       @if (book().sample) {
         <span class="sample">ตัวอย่าง</span>

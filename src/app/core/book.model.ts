@@ -7,6 +7,7 @@ export interface BookSummary {
   term: number; // 0 = รายปี, 1 หรือ 2 = ภาคเรียน
   title: string;
   hasData?: boolean; // false = ยังไม่มีฝ่ายใดกรอกข้อมูล
+  published?: boolean; // false = ยังไม่เผยแพร่ (คนนอกไม่เห็นเนื้อหา)
   coverImage?: string; // รูปปก (ถ้ามี) ถ้าไม่มีจะวาดปกให้อัตโนมัติ
   pdfUrl?: string; // ไฟล์ PDF ให้ดาวน์โหลด (ถ้ามี)
   sample?: boolean; // true = ข้อมูลตัวอย่าง
@@ -25,7 +26,16 @@ export interface Section {
 }
 
 /** เนื้อหาในหัวข้อ: ย่อหน้า ตาราง หรือรูป */
-export type Block = ParagraphBlock | TableBlock | ImageBlock;
+export type Block = ParagraphBlock | TableBlock | ImageBlock | ChartBlock;
+
+/** กราฟ: labels = แกนนอน, series = ชุดข้อมูล (ค่า null = ไม่มีข้อมูล) */
+export interface ChartBlock {
+  type: 'chart';
+  kind: 'bar' | 'line' | 'pie';
+  title: string;
+  labels: string[];
+  series: { name: string; values: (number | null)[] }[];
+}
 
 export interface ImageBlock {
   type: 'img';
@@ -43,6 +53,7 @@ export interface TableBlock {
   caption?: string;
   columns: string[];
   rows: (string | number)[][];
+  foot?: (string | number)[]; // แถว "รวม" ท้ายตาราง (คำนวณอัตโนมัติ)
 }
 
 /** ข้อความบอกว่าเป็นเล่มรายปีหรือรายภาคเรียน */
