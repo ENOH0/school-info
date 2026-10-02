@@ -1,0 +1,16 @@
+{
+    "/api": {
+        "target": "http://localhost",
+        "secure": false,
+        "pathRewrite": {
+            "^/api": "/school-info/api"
+        }
+    },
+    "/uploads": {
+        "target": "http://localhost",
+        "secure": false,
+        "pathRewrite": {
+            "^/uploads": "/school-info/uploads"
+        }
+    }
+}

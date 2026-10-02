@@ -1,0 +1,124 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+
+// ===== แถบบน =====
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  height: var(--header-h);
+  background: #fff;
+  border-bottom: 1px solid var(--line);
+}
+
+.header-inner {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--ink);
+  min-width: 0;
+}
+
+.logo {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+}
+
+// ที่ว่างรอโลโก้จริง
+.logo-placeholder {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  border: 2px dashed var(--sky-400);
+  border-radius: 50%;
+  font-size: 10px;
+  color: var(--blue-700);
+  background: var(--blue-50);
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+}
+
+.brand-name {
+  font-weight: 700;
+  color: var(--blue-800);
+}
+
+.brand-school {
+  font-size: 13px;
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nav a {
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  color: var(--ink-2);
+  padding: 8px 14px;
+  border-radius: 999px;
+  transition: all 0.15s;
+
+  &:hover {
+    color: var(--blue-700);
+    background: var(--blue-50);
+  }
+}
+
+// ===== ท้ายเว็บ =====
+.site-footer {
+  padding: 24px 0;
+  font-size: 14px;
+  color: rgb(255 255 255 / 0.8);
+  background: var(--blue-900);
+}
+
+.nav {
+  display: flex;
+  gap: 4px;
+}
+
+.nav a.manage {
+  color: var(--blue-700);
+  border: 1px solid var(--line);
+}
+
+@media (max-width: 600px) {
+  .nav a:not(.manage) {
+    display: none;
+  }
+}

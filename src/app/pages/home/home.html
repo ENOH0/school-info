@@ -1,0 +1,56 @@
+<section class="hero">
+  <div class="container hero-inner">
+    <div>
+      <p class="eyebrow">{{ site.systemName }}</p>
+      <h1>เอกสารสารสนเทศ<br />{{ site.schoolName }}</h1>
+      <p class="lead">รวมข้อมูลสารสนเทศของโรงเรียนในแต่ละปีการศึกษา เลือกเล่มที่ต้องการเพื่ออ่านและค้นหาข้อมูลได้ทันที</p>
+    </div>
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">{{ bookCount() }}</div>
+        <div class="stat-label">เล่มสารสนเทศ</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">{{ latestYear() }}</div>
+        <div class="stat-label">ปีการศึกษาล่าสุด</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="container shelf">
+  <div class="shelf-head">
+    <h2>เลือกเล่มสารสนเทศ</h2>
+    @if (years().length > 1) {
+      <div class="chips" role="group" aria-label="กรองตามปีการศึกษา">
+        <button class="chip" [class.on]="selectedYear() === null" (click)="selectedYear.set(null)">ทั้งหมด</button>
+        @for (y of years(); track y) {
+          <button class="chip" [class.on]="selectedYear() === y" (click)="selectedYear.set(y)">{{ y }}</button>
+        }
+      </div>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="grid">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="skeleton"></div>
+      }
+    </div>
+  } @else if (loadError()) {
+    <p class="empty">โหลดข้อมูลไม่ได้ (ตอนพัฒนา: เปิด XAMPP และรัน ng serve --proxy-config proxy.conf.json)</p>
+  } @else if (groups().length === 0) {
+    <p class="empty">ยังไม่มีเล่มสารสนเทศ เล่มจะขึ้นที่นี่เมื่อมีฝ่ายกรอกข้อมูลแล้ว</p>
+  } @else {
+    @for (g of groups(); track g.year) {
+      <div class="year-group">
+        <h3 class="year-title">ปีการศึกษา {{ g.year }}</h3>
+        <div class="grid">
+          @for (b of g.books; track b.id) {
+            <app-book-cover [book]="b" />
+          }
+        </div>
+      </div>
+    }
+  }
+</section>

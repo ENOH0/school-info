@@ -1,0 +1,37 @@
+<a class="cover-link" [routerLink]="['/book', book().id]" [attr.aria-label]="book().title + ' ' + label()">
+  <div class="book" [class.pending]="book().hasData === false">
+    @if (book().coverImage) {
+      <img class="face" [src]="book().coverImage" alt="" />
+    } @else {
+      <div class="face drawn">
+        <div class="logo" [class.has-img]="site.logo">
+          @if (site.logo) {
+            <img [src]="site.logo" alt="" />
+          } @else {
+            <span>โลโก้</span>
+          }
+        </div>
+        <div class="kicker">เอกสารสารสนเทศ</div>
+        <div class="school">{{ site.schoolName }}</div>
+        <div class="year-label">ปีการศึกษา</div>
+        <div class="year">{{ book().academicYear }}</div>
+        <div class="term">{{ label() }}</div>
+      </div>
+    }
+    @if (book().hasData === false) {
+      <div class="ribbon">กำลังรวบรวมข้อมูล</div>
+    }
+  </div>
+  <div class="meta">
+    <div class="title">{{ book().title }}</div>
+    <div class="sub">
+      <span class="badge">{{ label() }}</span>
+      @if (book().hasData === false) {
+        <span class="sample">ยังไม่มีข้อมูล</span>
+      }
+      @if (book().sample) {
+        <span class="sample">ตัวอย่าง</span>
+      }
+    </div>
+  </div>
+</a>

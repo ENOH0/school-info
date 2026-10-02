@@ -1,0 +1,177 @@
+// ===== ส่วนหัวสีน้ำเงิน =====
+.hero {
+  color: #fff;
+  background:
+    radial-gradient(circle at 90% 0%, rgb(56 189 248 / 0.45), transparent 40%),
+    radial-gradient(circle at 0% 100%, rgb(14 165 233 / 0.3), transparent 35%),
+    linear-gradient(135deg, var(--blue-700), var(--blue-900));
+  padding: 56px 0 72px;
+}
+
+.hero-inner {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: var(--sky-100);
+}
+
+h1 {
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 700;
+}
+
+.lead {
+  max-width: 560px;
+  margin: 0;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.stats {
+  display: flex;
+  gap: 12px;
+}
+
+.stat {
+  min-width: 140px;
+  padding: 14px 18px;
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 0.12);
+  border: 1px solid rgb(255 255 255 / 0.2);
+  backdrop-filter: blur(4px);
+}
+
+.stat-num {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: rgb(255 255 255 / 0.8);
+}
+
+// ===== ชั้นวางเล่ม =====
+.shelf {
+  position: relative;
+  margin-top: -32px; // ดึงขึ้นไปทับส่วนหัวนิดหนึ่ง
+  padding-bottom: 64px;
+}
+
+.shelf-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 22px;
+  background: #fff;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 32px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+  }
+}
+
+.chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--blue-700);
+    color: var(--blue-700);
+  }
+
+  &.on {
+    background: var(--blue-700);
+    border-color: var(--blue-700);
+    color: #fff;
+  }
+}
+
+.year-group {
+  margin-bottom: 40px;
+  animation: rise 0.4s ease both;
+}
+
+.year-title {
+  font-size: 18px;
+  color: var(--blue-900);
+  padding-left: 12px;
+  border-left: 4px solid var(--sky-500);
+  margin-bottom: 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 32px 24px;
+}
+
+.skeleton {
+  aspect-ratio: 210 / 297;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--blue-50), var(--blue-100), var(--blue-50));
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+}
+
+.empty {
+  color: var(--ink-2);
+  text-align: center;
+  padding: 40px 0;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .hero {
+    padding: 36px 0 60px;
+  }
+  .stats {
+    width: 100%;
+  }
+  .stat {
+    flex: 1;
+    min-width: 0;
+  }
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px 16px;
+  }
+}

@@ -1,0 +1,11 @@
+# โฟลเดอร์เก็บรูปที่อัปโหลด: ห้ามรันสคริปต์ใด ๆ ในโฟลเดอร์นี้
+Options -Indexes -ExecCGI
+<FilesMatch "\.(php|phtml|php\d|phar|pl|py|cgi|sh)$">
+    Require all denied
+</FilesMatch>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>

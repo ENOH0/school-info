@@ -1,0 +1,132 @@
+@if (error()) {
+  <div class="container state">
+    <h2>ไม่พบเล่มสารสนเทศนี้</h2>
+    <a class="btn primary" routerLink="/">กลับหน้าแรก</a>
+  </div>
+} @else if (!book()) {
+  <div class="container state">กำลังโหลด…</div>
+} @else {
+  @let b = book()!;
+
+  <!-- หัวเล่ม -->
+  <section class="book-head">
+    <div class="container head-inner">
+      <nav class="crumbs"><a routerLink="/">หน้าแรก</a><span>/</span>ปีการศึกษา {{ b.academicYear }}</nav>
+      <h1>{{ b.title }}</h1>
+      <div class="head-meta">
+        <span class="badge">ปีการศึกษา {{ b.academicYear }}</span>
+        <span class="badge">{{ label() }}</span>
+        @if (b.pdfUrl) {
+          <a class="btn ghost pdf" [href]="b.pdfUrl" target="_blank" rel="noopener">ดาวน์โหลด PDF</a>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- แถบค้นหา ติดด้านบนตอนเลื่อน -->
+  <div class="searchbar">
+    <div class="container search-inner">
+      <label class="search-field">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+        <input
+          #searchBox
+          type="text"
+          [value]="query()"
+          (input)="onQuery(searchBox.value)"
+          (keydown.enter)="next()"
+          (keydown.shift.enter)="prev()"
+          (keydown.escape)="clear()"
+          placeholder="ค้นหาในเล่มนี้ (Ctrl+F)"
+          aria-label="ค้นหาในเล่ม"
+        />
+        @if (query()) {
+          <button class="icon-btn" (click)="clear()" aria-label="ล้างคำค้น">✕</button>
+        }
+      </label>
+      @if (hasQuery()) {
+        <span class="count" [class.none]="total() === 0" aria-live="polite">
+          {{ total() === 0 ? 'ไม่พบ' : current() + 1 + ' / ' + total() }}
+        </span>
+        <button class="icon-btn nav" (click)="prev()" [disabled]="total() === 0" aria-label="ก่อนหน้า">▲</button>
+        <button class="icon-btn nav" (click)="next()" [disabled]="total() === 0" aria-label="ถัดไป">▼</button>
+      }
+    </div>
+  </div>
+
+  @if (b.sample) {
+    <div class="container">
+      <p class="notice">เล่มนี้เป็น <strong>ข้อมูลตัวอย่าง</strong> สำหรับทดสอบหน้าเว็บ ตัวเลขและข้อความทั้งหมดไม่ใช่ข้อมูลจริง</p>
+    </div>
+  }
+
+  <div class="container layout">
+    <!-- สารบัญ -->
+    <aside class="toc">
+      <div class="toc-title">สารบัญ</div>
+      <nav>
+        @for (s of view()!.sections; track s.id; let i = $index) {
+          @if (s.group && (i === 0 || s.group !== view()!.sections[i - 1].group)) {
+            <div class="toc-group">{{ s.group }}</div>
+          }
+          <button class="toc-item" [class.dim]="hasQuery() && s.hits === 0" (click)="goSection(s)">
+            <span>{{ s.titleText }}</span>
+            @if (hasQuery() && s.hits > 0) {
+              <span class="hits">{{ s.hits }}</span>
+            }
+          </button>
+        }
+      </nav>
+    </aside>
+
+    <!-- เนื้อหา -->
+    <article class="content">
+      @for (s of view()!.sections; track s.id) {
+        <section class="sec" [id]="'sec-' + s.id">
+          @if (s.group) {
+            <div class="sec-group">{{ s.group }}</div>
+          }
+          <h2><app-hl [segs]="s.title" [current]="current()" /></h2>
+          @for (blk of s.blocks; track $index) {
+            @if (blk.type === 'p') {
+              <p><app-hl [segs]="blk.segs" [current]="current()" /></p>
+            } @else if (blk.type === 'img') {
+              <figure class="fig">
+                <a [href]="blk.src" target="_blank" rel="noopener"><img [src]="blk.src" [alt]="blk.alt" loading="lazy" /></a>
+                @if (blk.caption.length) {
+                  <figcaption><app-hl [segs]="blk.caption" [current]="current()" /></figcaption>
+                }
+              </figure>
+            } @else {
+              <div class="table-wrap">
+                <table class="data-table">
+                  @if (blk.caption) {
+                    <caption><app-hl [segs]="blk.caption" [current]="current()" /></caption>
+                  }
+                  <thead>
+                    <tr>
+                      @for (h of blk.head; track $index) {
+                        <th [class.num]="h.num"><app-hl [segs]="h.segs" [current]="current()" /></th>
+                      }
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (row of blk.rows; track $index) {
+                      <tr>
+                        @for (cell of row; track $index) {
+                          <td [class.num]="cell.num"><app-hl [segs]="cell.segs" [current]="current()" /></td>
+                        }
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          }
+        </section>
+      }
+      @empty {
+        <p class="state">เล่มนี้กำลังรวบรวมข้อมูล ยังไม่มีฝ่ายใดกรอกข้อมูลของภาคเรียนนี้</p>
+      }
+    </article>
+  </div>
+}

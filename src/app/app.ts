@@ -1,12 +1,15 @@
-import { Component, signal } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component } from '@angular/core';
+import { RouterLink, RouterOutlet } from '@angular/router';
+import { SITE } from './site.config';
 
+// โครงหลักของทุกหน้า: แถบบน + เนื้อหา (router-outlet) + ท้ายเว็บ
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = signal('school-info-web');
+  site = SITE;
+  year = new Date().getFullYear() + 543; // ปี พ.ศ.
 }

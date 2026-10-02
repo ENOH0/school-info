@@ -42,3 +42,10 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# ===== ฝั่ง PHP (server/) =====
+# รหัสผ่านฐานข้อมูล ห้ามขึ้น git (ใช้ config.example.php เป็นต้นแบบ)
+/server/api/config.php
+# รูปที่ผู้ใช้อัปโหลด
+/server/uploads/*
+!/server/uploads/.htaccess

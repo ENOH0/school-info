@@ -1,0 +1,41 @@
+<?php
+// รายการหัวข้อของฝ่าย พร้อมบอกว่าภาคเรียนที่เลือกกรอกข้อมูลแล้วหรือยัง
+// GET topics.php?department_id=1&year=2569&term=1
+require __DIR__ . '/lib.php';
+$me = require_login();
+
+$deptId = isset($_GET['department_id']) ? (int) $_GET['department_id'] : 0;
+$year   = isset($_GET['year']) ? (int) $_GET['year'] : 0;
+$term   = isset($_GET['term']) ? (int) $_GET['term'] : 0;
+
+$stmt = db()->prepare(
+    'SELECT t.*, r.updated_at, u.display_name AS updated_by_name
+       FROM topics t
+       LEFT JOIN records r
+              ON r.topic_id = t.id
+             AND r.academic_year = ?
+             AND r.term = (CASE WHEN t.frequency = \'year\' THEN 0 ELSE ? END)
+       LEFT JOIN users u ON u.id = r.updated_by
+      WHERE t.department_id = ?
+      ORDER BY t.sort_order, t.id'
+);
+$stmt->execute([$year, $term, $deptId]);
+
+require_department_access($me, $deptId);
+$canEdit = true;
+
+json_out(array_map(function ($t) use ($canEdit) {
+    return [
+        'id'            => (int) $t['id'],
+        'departmentId'  => (int) $t['department_id'],
+        'chapter'       => (int) $t['chapter'],
+        'title'         => $t['title'],
+        'kind'          => $t['kind'],
+        'frequency'     => $t['frequency'],
+        'columns'       => topic_columns($t),
+        'hasData'       => $t['updated_at'] !== null,
+        'updatedAt'     => $t['updated_at'],
+        'updatedByName' => $t['updated_by_name'],
+        'canEdit'       => $canEdit,
+    ];
+}, $stmt->fetchAll()));

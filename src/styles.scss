@@ -1,1 +1,271 @@
-/* You can add global styles to this file, and also import other style files */
+// ===== ธีมหลักของทั้งเว็บ =====
+// แก้สีหรือฟอนต์ที่นี่ที่เดียว ทุกหน้าจะเปลี่ยนตาม
+
+:root {
+  // สีหลัก (น้ำเงินสด + ฟ้า)
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8; // สีหลัก
+  --blue-800: #1e40af;
+  --blue-900: #1e3a8a;
+  --sky-100: #e0f2fe;
+  --sky-400: #38bdf8;
+  --sky-500: #0ea5e9; // สีเน้น
+
+  // สีพื้นและตัวหนังสือ
+  --bg: #ffffff;
+  --bg-soft: var(--blue-50);
+  --ink: #0f172a; // ตัวหนังสือหลัก
+  --ink-2: #475569; // ตัวหนังสือรอง
+  --line: #dbe4f0; // เส้นขอบ
+
+  // สีไฮไลต์ตอนค้นหา (เหมือน Ctrl+F)
+  --hit: #fde68a;
+  --hit-current: #f59e0b;
+
+  // ขนาดและเงา
+  --radius: 12px;
+  --header-h: 64px;
+  --shadow-sm: 0 1px 2px rgb(15 23 42 / 0.06), 0 1px 3px rgb(15 23 42 / 0.08);
+  --shadow-md: 0 8px 24px rgb(30 64 175 / 0.12);
+  --shadow-lg: 0 18px 40px rgb(30 64 175 / 0.22);
+
+  --font: 'IBM Plex Sans Thai', 'Noto Sans Thai', system-ui, sans-serif;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.35;
+  margin: 0 0 0.5em;
+}
+
+a {
+  color: var(--blue-700);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+// กล่องจัดความกว้างเนื้อหา ใช้ทุกหน้า
+.container {
+  width: 100%;
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+// ปุ่ม
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 600;
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &.primary {
+    background: var(--blue-700);
+    color: #fff;
+    &:hover {
+      background: var(--blue-800);
+      box-shadow: var(--shadow-md);
+    }
+  }
+
+  &.ghost {
+    background: #fff;
+    color: var(--blue-700);
+    border-color: var(--line);
+    &:hover {
+      border-color: var(--blue-700);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+}
+
+// ป้ายเล็ก
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  background: var(--sky-100);
+  color: var(--blue-800);
+}
+
+// ตารางข้อมูลในเล่ม
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+
+  th,
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+  }
+
+  th {
+    background: var(--bg-soft);
+    color: var(--blue-900);
+    font-weight: 600;
+  }
+
+  td.num,
+  th.num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  tbody tr:hover {
+    background: #f8fbff;
+  }
+}
+
+:focus-visible {
+  outline: 3px solid var(--sky-400);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+// ===== ฟอร์มและส่วนจัดการ =====
+.card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.input,
+.select,
+.textarea {
+  font: inherit;
+  font-weight: 400;
+  font-size: 15px;
+  color: var(--ink);
+  padding: 8px 12px;
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 0;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:focus {
+    outline: 0;
+    border-color: var(--blue-600);
+    box-shadow: 0 0 0 3px var(--blue-100);
+  }
+
+  &:disabled {
+    background: var(--bg-soft);
+    color: var(--ink-2);
+  }
+}
+
+.textarea {
+  resize: vertical;
+  line-height: 1.7;
+}
+
+.btn.sm {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+.btn.danger {
+  background: #fff;
+  color: #b91c1c;
+  border-color: #fecaca;
+  &:hover {
+    background: #fef2f2;
+  }
+}
+
+.alert {
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ecfdf5;
+  color: #065f46;
+
+  &.err {
+    background: #fef2f2;
+    color: #991b1b;
+  }
+}
+
+.muted {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.row-gap {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.page-title {
+  font-size: 22px;
+  margin: 0 0 4px;
+  color: var(--blue-900);
+}
