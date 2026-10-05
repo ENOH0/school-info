@@ -18,6 +18,16 @@ export class AdminState {
 
   /** ภาคเรียนที่เลือกกรอกได้ (ไม่รวมแถวรายปี term = 0) */
   selectableTerms = computed(() => this.terms().filter((t) => t.term > 0));
+  /**
+   * ช่วงข้อมูลที่แสดงในหน้ากรอกข้อมูล:
+   * - ภาคเรียน 1–2 ตามปกติ
+   * - แถวรายปี เฉพาะปีเก่าที่ไม่มีภาคเรียนแยก (เช่น 2566–2568)
+   */
+  dataTerms = computed(() => {
+    const terms = this.terms();
+    const yearsWithSemester = new Set(terms.filter((t) => t.term > 0).map((t) => t.academicYear));
+    return terms.filter((t) => t.term > 0 || !yearsWithSemester.has(t.academicYear));
+  });
   term = computed(() => this.terms().find((t) => t.id === this.termId()) ?? null);
   dept = computed(() => this.departments().find((d) => d.id === this.deptId()) ?? null);
 
@@ -36,8 +46,8 @@ export class AdminState {
     }
     // ภาคเรียน: ครั้งแรกเลือกภาคเรียนปัจจุบัน ไม่มีก็เลือกล่าสุด
     const sel = this.selectableTerms();
-    if (!sel.some((t) => t.id === this.termId())) {
-      this.termId.set((sel.find((t) => t.isCurrent) ?? sel[0])?.id ?? null);
+    if (!this.dataTerms().some((t) => t.id === this.termId())) {
+      this.termId.set((sel.find((t) => t.isCurrent) ?? sel[0] ?? this.dataTerms()[0])?.id ?? null);
     }
     this.ready.set(true);
   }

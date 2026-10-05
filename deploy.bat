@@ -46,6 +46,7 @@ echo.
 echo === [3/3] ไฟล์ฐานข้อมูลและคู่มือ ===
 mkdir "deploy\database"
 copy /y "server\database\install.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\historical-2566-2568.sql" "deploy\database\" >nul || goto fail
 copy /y "server\DEPLOY.md" "deploy\DEPLOY.md" >nul
 
 echo.

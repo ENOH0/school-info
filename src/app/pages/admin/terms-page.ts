@@ -47,10 +47,12 @@ import { apiError } from '../../core/api-error';
             }
           </span>
           <span class="acts">
-            @if (t.isCurrent) {
-              <span class="badge">ภาคเรียนปัจจุบัน</span>
-            } @else {
-              <button class="btn ghost sm" (click)="setCurrent(t.id)" [disabled]="busy()">ตั้งเป็นปัจจุบัน</button>
+            @if (t.term > 0) {
+              @if (t.isCurrent) {
+                <span class="badge">ภาคเรียนปัจจุบัน</span>
+              } @else {
+                <button class="btn ghost sm" (click)="setCurrent(t.id)" [disabled]="busy()">ตั้งเป็นปัจจุบัน</button>
+              }
             }
             @if (t.isPublished) {
               @if (confirmId() === t.id) {
@@ -90,7 +92,7 @@ export class TermsPage {
   state = inject(AdminState);
   private api = inject(AdminApi);
 
-  terms = computed(() => this.state.selectableTerms());
+  terms = computed(() => this.state.dataTerms());
   label = periodLabel;
   busy = signal(false);
   message = signal('');

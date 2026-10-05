@@ -113,10 +113,10 @@ function cut(text: string, max: number): string {
     </figure>
   `,
   styles: `
-    :host { display: block; }
-    .chart { margin: 4px 0 20px; padding: 14px 14px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+    :host { display: block; min-width: 0; max-width: 100%; }
+    .chart { width: 100%; max-width: 100%; box-sizing: border-box; overflow: hidden; margin: 4px 0 20px; padding: 14px 14px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
     .title { font-weight: 600; color: var(--blue-900); margin-bottom: 6px; font-size: 15px; }
-    .scroll { overflow-x: auto; }
+    .scroll { width: 100%; max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
     svg { display: block; width: 100%; height: auto; font-family: inherit; }
     .grid { stroke: #e2e8f0; stroke-width: 1; }
     .axis { stroke: #94a3b8; stroke-width: 1; }

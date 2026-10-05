@@ -25,6 +25,7 @@ export const routes: Routes = [
       { path: 'overview', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/overview-page').then((m) => m.OverviewPage), title: page('ภาพรวม') },
       { path: 'terms', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/terms-page').then((m) => m.TermsPage), title: page('ปีการศึกษา') },
       { path: 'users', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/users-page').then((m) => m.UsersPage), title: page('ผู้ใช้') },
+      { path: 'backup', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/backup-page').then((m) => m.BackupPage), title: page('สำรองข้อมูล') },
     ],
   },
   { path: '**', redirectTo: '' },

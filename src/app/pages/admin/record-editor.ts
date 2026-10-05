@@ -32,7 +32,7 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
         </div>
         <label class="field">เปลี่ยนภาคเรียน
           <select class="select" (change)="changeTerm(+$any($event.target).value)">
-            @for (x of state.selectableTerms(); track x.id) {
+            @for (x of state.dataTerms(); track x.id) {
               <option [value]="x.id" [selected]="x.id === state.termId()">{{ label(x.academicYear, x.term) }}</option>
             }
           </select>
@@ -60,9 +60,47 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
       }
 
       @if (t.kind === 'text') {
+        <div class="entry-tip">
+          <strong>วิธีกรอก</strong>
+          <span>พิมพ์เนื้อหาได้ตามปกติ · กด Enter เพื่อขึ้นย่อหน้าใหม่ · เสร็จแล้วกด “บันทึกข้อมูล” ด้านล่าง</span>
+        </div>
         <textarea class="textarea big" name="text" [(ngModel)]="text" [disabled]="!t.canEdit"
           (ngModelChange)="dirty.set(true)" placeholder="พิมพ์ข้อความ ขึ้นบรรทัดใหม่ = ย่อหน้าใหม่"></textarea>
       } @else {
+        <div class="entry-toolbar">
+          <div class="toolbar-copy">
+            <strong>ข้อมูลตาราง <span class="row-count">{{ rows().length }} แถว</span></strong>
+            <span class="muted">กรอกทีละช่อง หรือวางข้อมูลหลายแถวจาก Excel/Google Sheets</span>
+          </div>
+          @if (t.canEdit) {
+            <div class="row-gap toolbar-actions">
+              <button class="btn primary sm" (click)="addRows(1)">+ เพิ่มแถวใหม่</button>
+              <button class="btn ghost sm" (click)="addRows(5)">+ เพิ่ม 5 แถว</button>
+              <button class="btn ghost sm" (click)="showPaste.set(!showPaste())">
+                {{ showPaste() ? 'ปิดช่องวาง Excel' : 'วางข้อมูลจาก Excel' }}
+              </button>
+              @if (res()!.previous && res()!.updatedAt) {
+                <button class="btn ghost sm" (click)="pullPrevious()" [disabled]="pulling()">ดึงข้อมูล{{ prevLabel() }}</button>
+              }
+            </div>
+          }
+        </div>
+
+        @if (t.canEdit && showPaste()) {
+          <div class="paste card">
+            <p><strong>วางข้อมูลหลายแถว</strong></p>
+            <p class="muted">
+              คัดลอกจาก Excel หรือ Google Sheets โดยเรียงคอลัมน์: <strong>{{ colNames() }}</strong>
+              (ไม่ต้องคัดลอกคอลัมน์ที่มีเครื่องหมาย Σ)
+            </p>
+            <textarea class="textarea" #pasteBox rows="5" placeholder="คลิกที่นี่ แล้วกด Ctrl+V"></textarea>
+            <div class="row-gap paste-actions">
+              <button class="btn primary sm" (click)="applyPaste(pasteBox.value, true)">แทนที่ข้อมูลเดิม</button>
+              <button class="btn ghost sm" (click)="applyPaste(pasteBox.value, false)">เพิ่มต่อท้ายข้อมูลเดิม</button>
+            </div>
+          </div>
+        }
+
         <div class="table-wrap">
           <table class="grid">
             <thead>
@@ -79,12 +117,12 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
             <tbody>
               @for (r of rows(); track $index; let i = $index) {
                 <tr>
-                  <td class="no">{{ i + 1 }}</td>
+                  <td class="no row-index" data-label="แถวที่">{{ i + 1 }}</td>
                   @for (c of t.columns; track c.key) {
                     @if (c.type === 'sum') {
-                      <td class="calc">{{ fmt(sumOf(c, r)) }}</td>
+                      <td class="calc" [attr.data-label]="c.label">{{ fmt(sumOf(c, r)) }}</td>
                     } @else {
-                    <td>
+                    <td [attr.data-label]="c.label">
                       <input class="cell" [class.numcol]="c.type === 'number'" [name]="'r' + i + c.key"
                         [(ngModel)]="r[c.key]" (ngModelChange)="dirty.set(true)" [disabled]="!t.canEdit"
                         [attr.inputmode]="c.type === 'number' ? 'decimal' : null"
@@ -93,7 +131,7 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
                     }
                   }
                   @if (t.canEdit) {
-                    <td class="no"><button class="del" (click)="removeRow(i)" aria-label="ลบแถว">✕</button></td>
+                    <td class="no row-actions" data-label="จัดการ"><button class="del" (click)="removeRow(i)" [attr.aria-label]="'ลบแถวที่ ' + (i + 1)" title="ลบแถวนี้">✕</button></td>
                   }
                 </tr>
               }
@@ -104,7 +142,7 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
                 <tr>
                   <td class="no"></td>
                   @for (c of t.columns; track c.key) {
-                    <td class="calc" [class.lbl]="c.type === 'text'">{{ fmt(tot[c.key]) }}</td>
+                    <td class="calc" [class.lbl]="c.type === 'text'" [attr.data-label]="c.label">{{ fmt(tot[c.key]) }}</td>
                   }
                   @if (t.canEdit) { <td class="no"></td> }
                 </tr>
@@ -114,26 +152,9 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
         </div>
 
         @if (t.canEdit) {
-          <div class="row-gap tools">
-            <button class="btn ghost sm" (click)="addRows(1)">+ เพิ่มแถว</button>
-            <button class="btn ghost sm" (click)="addRows(5)">+ 5 แถว</button>
-            <button class="btn ghost sm" (click)="showPaste.set(!showPaste())">วางข้อมูลจาก Excel</button>
-            @if (res()!.previous && res()!.updatedAt) {
-              <button class="btn ghost sm" (click)="pullPrevious()" [disabled]="pulling()">ดึงข้อมูล{{ prevLabel() }}</button>
-            }
+          <div class="row-gap tools bottom-tools">
+            <button class="btn ghost sm" (click)="addRows(1)">+ เพิ่มแถวท้ายตาราง</button>
           </div>
-          @if (showPaste()) {
-            <div class="paste card">
-              <p class="muted">
-                คัดลอกช่องจาก Excel หรือ Google Sheets (เรียงคอลัมน์ให้ตรงกับตาราง: {{ colNames() }}) แล้ววางในช่องนี้
-              </p>
-              <textarea class="textarea" #pasteBox rows="5"></textarea>
-              <div class="row-gap">
-                <button class="btn primary sm" (click)="applyPaste(pasteBox.value, true)">แทนที่ข้อมูลทั้งหมด</button>
-                <button class="btn ghost sm" (click)="applyPaste(pasteBox.value, false)">ต่อท้ายข้อมูลเดิม</button>
-              </div>
-            </div>
-          }
         }
       }
 
@@ -178,7 +199,7 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
         <p class="alert" [class.err]="isError()">{{ message() }}</p>
       }
 
-      <div class="footer">
+      <div class="footer" [class.has-changes]="dirty()">
         <span class="muted">
           @if (res()!.updatedAt) {
             บันทึกล่าสุด {{ res()!.updatedAt }}{{ res()!.updatedByName ? ' โดย ' + res()!.updatedByName : '' }}
@@ -195,7 +216,7 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
             } @else if (res()!.updatedAt) {
               <button class="btn danger sm" (click)="confirmClear.set(true)">ล้างข้อมูล</button>
             }
-            <button class="btn primary" (click)="save()" [disabled]="busy()">{{ busy() ? 'กำลังบันทึก…' : 'บันทึก' }}</button>
+            <button class="btn primary save-btn" (click)="save()" [disabled]="busy()">{{ busy() ? 'กำลังบันทึก…' : 'บันทึกข้อมูล' }}</button>
           </div>
         }
       </div>
@@ -206,9 +227,14 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
     .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
     .head p { margin: 0; }
     .big { width: 100%; min-height: 360px; }
-    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+    .entry-tip { display: flex; gap: 8px 14px; flex-wrap: wrap; margin-bottom: 10px; padding: 10px 12px; border-radius: var(--radius); background: var(--blue-50); color: var(--blue-900); font-size: 14px; }
+    .entry-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-soft); }
+    .toolbar-copy { display: flex; flex-direction: column; gap: 2px; }
+    .row-count { display: inline-block; margin-left: 5px; padding: 2px 8px; border-radius: 999px; background: var(--blue-100); color: var(--blue-800); font-size: 12px; }
+    .toolbar-actions { justify-content: flex-end; }
+    .table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); }
     .grid { border-collapse: collapse; width: 100%; font-size: 15px; }
-    .grid th { background: var(--bg-soft); color: var(--blue-900); font-weight: 600; text-align: left; padding: 8px 10px; white-space: nowrap; }
+    .grid th { position: sticky; top: 0; z-index: 2; background: var(--bg-soft); color: var(--blue-900); font-weight: 600; text-align: left; padding: 8px 10px; white-space: nowrap; }
     .grid td { border-top: 1px solid var(--line); padding: 0; }
     .grid .no { width: 40px; text-align: center; color: var(--ink-2); font-size: 13px; padding: 0 6px; }
     .grid th.numcol { text-align: right; }
@@ -223,11 +249,15 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
     .del { border: 0; background: none; color: var(--ink-2); cursor: pointer; width: 28px; height: 28px; border-radius: 50%; }
     .del:hover { background: #fef2f2; color: #b91c1c; }
     .tools { margin-top: 10px; }
-    .paste { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--bg-soft); }
+    .bottom-tools { justify-content: flex-end; }
+    .paste { margin: 0 0 10px; display: flex; flex-direction: column; gap: 8px; background: var(--bg-soft); }
     .paste p { margin: 0; }
+    .paste-actions { justify-content: flex-end; }
     .alert { margin: 12px 0 0; }
     .alert.info { background: var(--blue-50); color: var(--blue-900); margin: 0 0 12px; }
-    .footer { position: sticky; bottom: 0; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding: 12px 0; background: rgb(255 255 255 / 0.95); border-top: 1px solid var(--line); }
+    .footer { position: sticky; bottom: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding: 12px; background: rgb(255 255 255 / 0.96); border: 1px solid var(--line); border-radius: var(--radius) var(--radius) 0 0; backdrop-filter: blur(8px); }
+    .footer.has-changes { border-color: #f59e0b; box-shadow: 0 -6px 22px rgb(15 23 42 / 0.08); }
+    .save-btn { min-width: 130px; }
     .unsaved { color: #b45309; }
     .alert.copied { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
     .alert.prev { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--blue-50); color: var(--blue-900); margin: 0 0 12px; }
@@ -242,6 +272,62 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
     .cap { font-size: 14px; padding: 6px 10px; }
     .img-tools { display: flex; justify-content: center; gap: 4px; }
     .images p { margin: 0; }
+
+    @media (max-width: 720px) {
+      .head { align-items: stretch; }
+      .head .field { width: 100%; }
+      .head .select { width: 100%; }
+      .entry-toolbar { align-items: stretch; }
+      .toolbar-copy, .toolbar-actions { width: 100%; }
+      .toolbar-actions .btn { flex: 1 1 140px; }
+      .paste-actions .btn { flex: 1 1 100%; }
+
+      // มือถือ: เปลี่ยนแต่ละแถวเป็นการ์ด มีชื่อคอลัมน์กำกับทุกช่อง
+      .table-wrap { overflow: visible; border: 0; background: transparent; }
+      .grid, .grid tbody, .grid tfoot { display: block; width: 100%; }
+      .grid thead { display: none; }
+      .grid tbody tr, .grid tfoot tr { display: block; margin-bottom: 12px; overflow: hidden; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
+      .grid tbody td, .grid tfoot td, .grid tfoot td.calc {
+        display: grid;
+        grid-template-columns: minmax(105px, 42%) minmax(0, 1fr);
+        align-items: center;
+        min-height: 44px;
+        border-top: 1px solid var(--line);
+        padding: 0;
+        text-align: left;
+        white-space: normal;
+      }
+      .grid tbody td:first-child, .grid tfoot td:first-child { border-top: 0; }
+      .grid tbody td::before, .grid tfoot td::before {
+        content: attr(data-label);
+        align-self: stretch;
+        display: flex;
+        align-items: center;
+        padding: 9px 10px;
+        background: var(--bg-soft);
+        color: var(--blue-900);
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .grid .row-index { width: auto; color: var(--blue-900); font-weight: 700; text-align: left; }
+      .grid .row-actions { width: auto; }
+      .grid .row-actions .del { margin: 5px 8px; justify-self: end; }
+      .grid td.calc { padding: 0; }
+      .grid td.calc:not(.lbl) { text-align: right; }
+      .grid td.calc::after { content: ''; }
+      .grid td.calc { column-gap: 0; }
+      .grid td.calc { padding-right: 10px; }
+      .grid td.calc::before { margin-right: 10px; }
+      .cell { min-width: 0; padding: 11px 10px; }
+      .bottom-tools .btn { width: 100%; }
+      .images { padding: 12px; }
+      .upload { width: 100%; margin-left: 0; text-align: center; }
+      .footer { align-items: stretch; }
+      .footer > span, .footer > .row-gap { width: 100%; }
+      .footer > .row-gap { justify-content: stretch; }
+      .footer .btn { flex: 1 1 auto; }
+      .footer .save-btn { min-width: 0; }
+    }
   `,
 })
 export class RecordEditor {
@@ -281,7 +367,7 @@ export class RecordEditor {
   totals() {
     return totalRow(this.res()!.topic.columns, this.rows());
   }
-  colNames = computed(() => (this.res()?.topic.columns ?? []).map((c) => c.label).join(', '));
+  colNames = computed(() => (this.res()?.topic.columns ?? []).filter((c) => c.type !== 'sum').map((c) => c.label).join(', '));
 
   constructor() {
     // โหลดใหม่เมื่อเปลี่ยนหัวข้อหรือภาคเรียน
@@ -330,9 +416,13 @@ export class RecordEditor {
   addRows(n: number) {
     const cols = this.res()!.topic.columns;
     this.rows.update((rows) => [...rows, ...Array.from({ length: n }, () => this.blankRow(cols))]);
+    this.dirty.set(true);
   }
 
   removeRow(i: number) {
+    const row = this.rows()[i];
+    const hasData = Object.values(row).some((v) => v !== '' && v !== null);
+    if (hasData && !confirm(`ลบแถวที่ ${i + 1}? ข้อมูลในแถวนี้จะถูกนำออกเมื่อกดบันทึก`)) return;
     this.rows.update((rows) => rows.filter((_, j) => j !== i));
     this.dirty.set(true);
   }
@@ -340,14 +430,15 @@ export class RecordEditor {
   /** แปลงข้อความที่คัดลอกจาก Excel (คั่นด้วย Tab) เป็นแถวของตาราง */
   applyPaste(raw: string, replace: boolean) {
     const cols = this.res()!.topic.columns;
+    const editableCols = cols.filter((c) => c.type !== 'sum');
     const pasted = raw
       .replace(/\r/g, '')
       .split('\n')
       .filter((line) => line.trim() !== '')
       .map((line) => {
         const cells = line.split('\t');
-        const row: Row = {};
-        cols.forEach((c, i) => (row[c.key] = (cells[i] ?? '').trim()));
+        const row = this.blankRow(cols);
+        editableCols.forEach((c, i) => (row[c.key] = (cells[i] ?? '').trim()));
         return row;
       });
     if (!pasted.length) return;

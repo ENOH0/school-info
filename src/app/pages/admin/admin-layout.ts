@@ -21,6 +21,7 @@ import { apiError } from '../../core/api-error';
           @if (auth.isAdmin()) {
             <a routerLink="/admin/terms" routerLinkActive="on">ปีการศึกษา</a>
             <a routerLink="/admin/users" routerLinkActive="on">ผู้ใช้</a>
+            <a routerLink="/admin/backup" routerLinkActive="on">สำรองข้อมูล</a>
           }
         </nav>
         <div class="me">

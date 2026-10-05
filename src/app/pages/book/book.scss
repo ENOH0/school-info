@@ -169,6 +169,12 @@ h1 {
   padding-bottom: 80px;
 }
 
+// อนุญาตให้คอลัมน์เนื้อหาย่อตามจอ ไม่ให้ตาราง/กราฟดันทั้งหน้าให้กว้างเกิน viewport
+.content {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .toc {
   position: sticky;
   top: calc(var(--header-h) + 80px);
@@ -244,6 +250,8 @@ h1 {
 }
 
 .sec {
+  min-width: 0;
+  max-width: 100%;
   scroll-margin-top: calc(var(--header-h) + 80px);
   padding-bottom: 32px;
   margin-bottom: 32px;
@@ -264,6 +272,9 @@ h1 {
 }
 
 .table-wrap {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   overflow-x: auto;
   margin: 8px 0 20px;
   border: 1px solid var(--line);

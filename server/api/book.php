@@ -69,8 +69,13 @@ foreach ($stmt->fetchAll() as $row) {
 
         // กราฟ (ตั้งค่าที่หน้าแก้ไขหัวข้อ)
         $chart = topic_chart($row);
+        // ถ้ายังไม่ได้ตั้งค่ากราฟ ให้สร้างกราฟแท่งอัตโนมัติจากคอลัมน์ตัวเลข
+        // (ไม่นำคอลัมน์ลำดับ เช่น "ที่"/"ลำดับ" มาวาด)
+        if (!$chart && $row['chart_json'] === null) {
+            $chart = automatic_chart($cols);
+        }
         if ($chart && count($filled) > 0) {
-            $blocks[] = chart_block($chart, $cols, $filled);
+            $blocks[] = chart_block($chart, $cols, $filled, $row['title']);
             if (!empty($chart['trend'])) {
                 $trend = trend_block($row, $chart, $cols, $loggedIn);
                 if ($trend) {
@@ -97,6 +102,40 @@ foreach ($stmt->fetchAll() as $row) {
     ];
 }
 
+// ให้เล่มและสารบัญแสดงหมวด 1–10 ครบเสมอ
+// หมวดที่ยังไม่มีหัวข้อจะแสดงข้อความรอข้อมูล และจะหายไปเองเมื่อมีข้อมูลจริงในหมวดนั้น
+$completeSections = [];
+$usedSections = [];
+for ($chapter = 1; $chapter <= 10; $chapter++) {
+    $group = chapter_label($chapter);
+    $found = false;
+    foreach ($sections as $index => $section) {
+        if ($section['group'] === $group) {
+            $completeSections[] = $section;
+            $usedSections[$index] = true;
+            $found = true;
+        }
+    }
+    if (!$found) {
+        $completeSections[] = [
+            'id' => 'empty-chapter-' . $chapter,
+            'group' => $group,
+            'title' => 'ยังไม่มีข้อมูล',
+            'blocks' => [[
+                'type' => 'p',
+                'text' => 'ยังไม่มีข้อมูลในหมวดนี้สำหรับปีการศึกษา ' . $year,
+            ]],
+        ];
+    }
+}
+// หมวด "อื่น ๆ" (chapter 0) หรือหมวดพิเศษยังคงอยู่ท้ายเล่ม
+foreach ($sections as $index => $section) {
+    if (!isset($usedSections[$index])) {
+        $completeSections[] = $section;
+    }
+}
+$sections = $completeSections;
+
 json_out([
     'id'           => (int) $t['id'],
     'academicYear' => $year,
@@ -120,7 +159,23 @@ function col_label($cols, $key)
 }
 
 /** กราฟของตารางในภาคเรียนนี้: แกนนอน = คอลัมน์ข้อความแรก (เช่น ระดับชั้น) */
-function chart_block($chart, $cols, $rows)
+function automatic_chart($cols)
+{
+    $series = [];
+    foreach ($cols as $c) {
+        if ($c['type'] !== 'number') {
+            continue;
+        }
+        $label = isset($c['label']) ? trim((string) $c['label']) : '';
+        if (preg_match('/^(ที่|ลำดับ|เลขที่)$/u', $label)) {
+            continue;
+        }
+        $series[] = $c['key'];
+    }
+    return count($series) ? ['type' => 'bar', 'series' => $series, 'trend' => false] : null;
+}
+
+function chart_block($chart, $cols, $rows, $topicTitle)
 {
     $labelKey = null;
     foreach ($cols as $c) {
@@ -143,7 +198,13 @@ function chart_block($chart, $cols, $rows)
         }
         $series[] = ['name' => col_label($cols, $k), 'values' => $values];
     }
-    return ['type' => 'chart', 'kind' => $chart['type'], 'title' => '', 'labels' => $labels, 'series' => $series];
+    return [
+        'type' => 'chart',
+        'kind' => $chart['type'],
+        'title' => 'กราฟแสดงข้อมูล: ' . $topicTitle,
+        'labels' => $labels,
+        'series' => $series,
+    ];
 }
 
 /**

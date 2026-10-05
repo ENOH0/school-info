@@ -102,4 +102,16 @@ export class AdminApi {
   }) {
     return this.http.post<Ok>('api/user-save.php', u);
   }
+
+  restoreDatabase(file: File) {
+    const form = new FormData();
+    form.append('backup', file, file.name);
+    form.append('confirm', 'RESTORE');
+    return this.http.post<{
+      ok: true;
+      automaticBackup: string;
+      counts: Record<string, number>;
+      scope: { type: 'all' | 'year'; academicYear?: number };
+    }>('api/database-restore.php', form);
+  }
 }

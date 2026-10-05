@@ -389,12 +389,19 @@ function topic_chart($topic)
         return null;
     }
     $c = json_decode((string) $topic['chart_json'], true);
+    if (is_array($c) && isset($c['type']) && $c['type'] === 'none') {
+        return null; // ผู้ดูแลเลือกปิดกราฟของหัวข้อนี้โดยเฉพาะ
+    }
     return is_array($c) && isset($c['type'], $c['series']) ? $c : null;
 }
 
 /** ตรวจค่ากราฟที่ส่งมาจากหน้าแก้ไขหัวข้อ คืน JSON ที่จะเก็บ หรือ null = ไม่มีกราฟ */
 function clean_chart($raw, $columns)
 {
+    if (is_array($raw) && isset($raw['type']) && $raw['type'] === 'none') {
+        // เก็บค่า none ไว้เพื่อแยกจาก NULL ซึ่งหมายถึงหัวข้อเก่าที่ยังไม่เคยตั้งค่ากราฟ
+        return json_encode(['type' => 'none', 'series' => [], 'trend' => false]);
+    }
     if (!is_array($raw) || !isset($raw['type']) || !in_array($raw['type'], ['bar', 'line', 'pie'], true)) {
         return null;
     }

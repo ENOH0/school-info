@@ -13,6 +13,7 @@ $stmt = db()->prepare(
             r.updated_at, r.data_json, u.display_name AS updated_by_name
        FROM departments d
        LEFT JOIN topics t ON t.department_id = d.id
+                         AND (? > 0 OR t.frequency = \'year\')
        LEFT JOIN records r
               ON r.topic_id = t.id
              AND r.academic_year = ?
@@ -20,7 +21,7 @@ $stmt = db()->prepare(
        LEFT JOIN users u ON u.id = r.updated_by
       ORDER BY d.sort_order, d.id, t.chapter = 0, t.chapter, t.sort_order, t.id'
 );
-$stmt->execute([$year, $term]);
+$stmt->execute([$term, $year, $term]);
 
 $depts = [];
 foreach ($stmt->fetchAll() as $row) {

@@ -11,16 +11,24 @@ $in = read_json();
 $pdo = db();
 
 if (!empty($in['id']) && array_key_exists('publish', $in)) {
-    $pub = $in['publish'] ? 1 : 0;
-    $stmt = $pdo->prepare('UPDATE terms SET is_published = ?, published_at = ? WHERE id = ? AND term > 0');
-    $stmt->execute([$pub, $pub ? now_str() : null, (int) $in['id']]);
-    if ($stmt->rowCount() === 0) {
-        $chk = $pdo->prepare('SELECT COUNT(*) FROM terms WHERE id = ? AND term > 0');
-        $chk->execute([(int) $in['id']]);
-        if (!(int) $chk->fetchColumn()) {
-            fail('ไม่พบภาคเรียนนี้', 404);
+    $id = (int) $in['id'];
+    $period = $pdo->prepare('SELECT academic_year, term FROM terms WHERE id = ?');
+    $period->execute([$id]);
+    $period = $period->fetch();
+    if (!$period) {
+        fail('ไม่พบปีการศึกษาหรือภาคเรียนนี้', 404);
+    }
+    // แถวรายปีที่เป็นเพียงตัวรองรับข้อมูลของปีที่มีภาคเรียน ห้ามเผยแพร่แยก
+    if ((int) $period['term'] === 0) {
+        $semesters = $pdo->prepare('SELECT COUNT(*) FROM terms WHERE academic_year = ? AND term > 0');
+        $semesters->execute([(int) $period['academic_year']]);
+        if ((int) $semesters->fetchColumn() > 0) {
+            fail('ปีนี้มีเล่มรายภาคเรียนอยู่แล้ว ให้เผยแพร่จากรายการภาคเรียน');
         }
     }
+    $pub = $in['publish'] ? 1 : 0;
+    $stmt = $pdo->prepare('UPDATE terms SET is_published = ?, published_at = ? WHERE id = ?');
+    $stmt->execute([$pub, $pub ? now_str() : null, $id]);
     json_out(['ok' => true]);
 }
 

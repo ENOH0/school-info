@@ -17,9 +17,10 @@ $stmt = db()->prepare(
              AND r.term = (CASE WHEN t.frequency = \'year\' THEN 0 ELSE ? END)
        LEFT JOIN users u ON u.id = r.updated_by
       WHERE t.department_id = ?
+        AND (? > 0 OR t.frequency = \'year\')
       ORDER BY t.sort_order, t.id'
 );
-$stmt->execute([$year, $term, $deptId]);
+$stmt->execute([$year, $term, $deptId, $term]);
 
 require_department_access($me, $deptId);
 $canEdit = true;

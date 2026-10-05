@@ -24,7 +24,7 @@ import { apiError } from '../../core/api-error';
       <div class="row-gap">
         <label class="field">ภาคเรียน
           <select class="select" (change)="state.termId.set(+$any($event.target).value)">
-            @for (t of state.selectableTerms(); track t.id) {
+            @for (t of state.dataTerms(); track t.id) {
               <option [value]="t.id" [selected]="t.id === state.termId()">
                 {{ label(t.academicYear, t.term) }}{{ t.isCurrent ? ' (ปัจจุบัน)' : '' }}
               </option>
