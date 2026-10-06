@@ -9,6 +9,11 @@ define('DB_NAME', 'school_info');
 define('DB_USER', 'root');
 define('DB_PASS', ''); // ← ใส่รหัสผ่านจริงตอนติดตั้ง
 
+// ไม่บังคับ: ที่เก็บไฟล์สำรองอัตโนมัติก่อนกู้คืน
+// ควรอยู่นอก htdocs/public_html และ PHP ต้องเขียนได้
+// ถ้าไม่กำหนด ระบบจะใช้โฟลเดอร์ school-info-backups ที่อยู่เหนือ document root
+// define('BACKUP_DIR', 'C:\\xampp7.4\\school-info-backups');
+
 function db()
 {
     static $pdo = null;

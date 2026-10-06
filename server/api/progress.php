@@ -66,6 +66,6 @@ foreach ($stmt->fetchAll() as $row) {
 json_out([
     'academicYear' => $year,
     'term'         => $term,
-    'published'    => period_locked($year, $term) && $term > 0,
+    'published'    => period_locked($year, $term),
     'departments'  => array_values($depts),
 ]);

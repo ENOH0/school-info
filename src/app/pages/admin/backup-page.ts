@@ -9,7 +9,7 @@ import { AdminState } from '../../core/admin-state.service';
     <div class="head">
       <div>
         <h1 class="page-title">สำรองและกู้คืนข้อมูล</h1>
-        <p class="muted">สำหรับผู้ดูแลระบบเท่านั้น ไฟล์สำรองมีข้อมูลผู้ใช้ หัวข้อ และข้อมูลทุกปี</p>
+        <p class="muted">สำหรับผู้ดูแลระบบเท่านั้น ไฟล์สำรองมีข้อมูลผู้ใช้ หัวข้อ ข้อมูลรายปี และรูปประกอบที่เกี่ยวข้อง</p>
       </div>
     </div>
 
@@ -50,6 +50,9 @@ import { AdminState } from '../../core/admin-state.service';
               {{ fileScope()!.type === 'all' ? 'ไฟล์นี้จะกู้คืนทั้งระบบ' : 'ไฟล์นี้จะกู้คืนเฉพาะปีการศึกษา ' + fileScope()!.academicYear }}
             </div>
           }
+          @if (legacyFile()) {
+            <div class="legacy">ไฟล์สำรองรุ่นเก่า: กู้คืนฐานข้อมูลได้ แต่ไฟล์นี้ไม่มีรูปประกอบรวมอยู่</div>
+          }
           <label class="field">พิมพ์คำว่า RESTORE เพื่อยืนยัน
             <input #confirmBox class="input" [value]="confirm()" (input)="confirm.set(confirmBox.value)" autocomplete="off" />
           </label>
@@ -78,6 +81,7 @@ import { AdminState } from '../../core/admin-state.service';
     .chosen { padding: 8px 10px; border-radius: 8px; background: #f8fafc; color: var(--ink-2); font-size: 14px; overflow-wrap: anywhere; }
     .scope { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #eff6ff; color: #1e40af; font-size: 14px; font-weight: 600; }
     .scope.all { background: #fff7ed; color: #9a3412; }
+    .legacy { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: #fefce8; color: #854d0e; font-size: 14px; }
   `,
 })
 export class BackupPage {
@@ -88,6 +92,7 @@ export class BackupPage {
   backupUrl = computed(() => this.backupYear() === 0 ? 'api/database-backup.php' : `api/database-backup.php?year=${this.backupYear()}`);
   file = signal<File | null>(null);
   fileScope = signal<{ type: 'all' | 'year'; academicYear?: number } | null>(null);
+  legacyFile = signal(false);
   confirm = signal('');
   busy = signal(false);
   message = signal('');
@@ -97,16 +102,27 @@ export class BackupPage {
     const file = (event.target as HTMLInputElement).files?.[0] ?? null;
     this.file.set(file);
     this.fileScope.set(null);
+    this.legacyFile.set(false);
     this.message.set('');
     this.error.set('');
     if (file) {
       file.text().then((raw) => {
         try {
           const parsed = JSON.parse(raw);
-          const scope = parsed?.scope?.type === 'year'
-            ? { type: 'year' as const, academicYear: Number(parsed.scope.academicYear) }
+          const version = Number(parsed?.version);
+          const scopeType = parsed?.scope?.type ?? 'all';
+          if (parsed?.format !== 'school-info-backup' || ![1, 2].includes(version) || !['all', 'year'].includes(scopeType)) {
+            throw new Error('invalid backup');
+          }
+          const year = Number(parsed?.scope?.academicYear);
+          if (scopeType === 'year' && (!Number.isInteger(year) || year < 2400 || year > 3000)) {
+            throw new Error('invalid year');
+          }
+          const scope = scopeType === 'year'
+            ? { type: 'year' as const, academicYear: year }
             : { type: 'all' as const };
           this.fileScope.set(scope);
+          this.legacyFile.set(version === 1);
         } catch {
           this.error.set('อ่านรายละเอียดไฟล์ไม่ได้ กรุณาเลือกไฟล์สำรอง .json ที่สร้างจากระบบนี้');
         }
@@ -126,8 +142,10 @@ export class BackupPage {
         this.confirm.set('');
         this.file.set(null);
         this.fileScope.set(null);
+        this.legacyFile.set(false);
         const scope = result.scope.type === 'year' ? `ปีการศึกษา ${result.scope.academicYear}` : 'ทั้งระบบ';
-        this.message.set(`กู้คืน${scope}สำเร็จ: ${result.counts['records']} รายการข้อมูล · ระบบเก็บสำเนาก่อนกู้คืนไว้เป็น ${result.automaticBackup}`);
+        this.message.set(`กู้คืน${scope}สำเร็จ: ${result.counts['records']} รายการข้อมูล · กำลังโหลดข้อมูลล่าสุด…`);
+        setTimeout(() => window.location.reload(), 1000);
       },
       error: (e) => {
         this.busy.set(false);

@@ -11,8 +11,8 @@ if (($_POST['confirm'] ?? '') !== 'RESTORE') {
 if (!isset($_FILES['backup']) || $_FILES['backup']['error'] !== UPLOAD_ERR_OK) {
     fail('กรุณาเลือกไฟล์สำรอง');
 }
-if ((int) $_FILES['backup']['size'] > 50 * 1024 * 1024) {
-    fail('ไฟล์สำรองต้องมีขนาดไม่เกิน 50 MB');
+if ((int) $_FILES['backup']['size'] > 250 * 1024 * 1024) {
+    fail('ไฟล์สำรองต้องมีขนาดไม่เกิน 250 MB');
 }
 
 $raw = file_get_contents($_FILES['backup']['tmp_name']);

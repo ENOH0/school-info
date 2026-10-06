@@ -1,0 +1,23 @@
+เช็กลิสต์ก่อนขึ้นเซิร์ฟเวอร์โรงเรียน
+====================================
+
+[ ] 1. ถามผู้ดูแลว่าโฟลเดอร์เว็บไซต์จริงอยู่ที่ไหน
+        ตัวอย่าง Windows: C:\xampp\htdocs\school-info
+        ตัวอย่าง Linux:   /var/www/html/school-info
+
+[ ] 2. ตรวจว่า APP ใน deploy.bat ตรงกับ URL ของเว็บ
+        URL ลงท้าย /school-info/ ให้ใช้ APP=school-info
+        เว็บอยู่ที่โดเมนหลัก ให้ใช้ APP=/
+
+[ ] 3. ถามผู้ดูแลว่าจะเก็บไฟล์สำรองไว้ที่โฟลเดอร์ใด
+        ต้องอยู่นอก htdocs หรือ public_html และ PHP ต้องเขียนได้
+
+[ ] 4. หลังอัปโหลด ให้กำหนดใน api/config.php เช่น
+        Windows: define('BACKUP_DIR', 'D:\\school-backups\\school-info');
+        Linux:   define('BACKUP_DIR', '/home/school/backups/school-info');
+
+[ ] 5. เปิด api/check.php และตรวจให้ผ่านทุกข้อ
+
+ห้ามเริ่มใช้งานระบบกู้คืน จนกว่าจะตรวจว่า BACKUP_DIR เขียนไฟล์ได้จริง
+
+ตรวจครบแล้วให้กด Y เพื่อเริ่ม Build ถ้ายังไม่ครบให้กด N เพื่อหยุดก่อน

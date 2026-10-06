@@ -92,6 +92,20 @@ function blockView(b: Block, q: string, c: Counter): BlockView {
   };
 }
 
+/** ข้อความความเรียงที่เว้นบรรทัดว่าง ให้แสดงเป็นหลายย่อหน้าจริง */
+function blockViews(b: Block, q: string, c: Counter): BlockView[] {
+  if (b.type !== 'p') return [blockView(b, q, c)];
+
+  const paragraphs = b.text
+    .split(/\r?\n\s*\r?\n/)
+    .map((text) => text.trim())
+    .filter(Boolean);
+  return (paragraphs.length ? paragraphs : ['']).map((text) => ({
+    type: 'p' as const,
+    segs: split(text, q, c),
+  }));
+}
+
 /** สร้างข้อมูลสำหรับแสดงผลทั้งเล่ม พร้อมไฮไลต์คำค้น */
 export function buildView(book: Book, query: string): BookView {
   const q = query.trim().toLocaleLowerCase();
@@ -100,7 +114,7 @@ export function buildView(book: Book, query: string): BookView {
   const sections = book.sections.map((s) => {
     const start = c.n;
     const title = split(s.title, q, c);
-    const blocks = s.blocks.map((b) => blockView(b, q, c));
+    const blocks = s.blocks.flatMap((b) => blockViews(b, q, c));
     return { id: s.id, group: s.group ?? '', title, titleText: s.title, blocks, hits: c.n - start };
   });
 

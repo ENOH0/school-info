@@ -15,6 +15,20 @@ set "APP=school-info"
 
 cd /d "%~dp0"
 
+echo.
+echo ================================================================
+echo   IMPORTANT: CHECK THE SCHOOL SERVER BEFORE BUILDING
+echo ================================================================
+echo   1. Confirm the real website folder with the server administrator.
+echo   2. Confirm a backup folder outside htdocs or public_html.
+echo   3. Set BACKUP_DIR in api\config.php after uploading.
+echo   4. Check that APP in deploy.bat matches the website URL.
+echo.
+type "server\SERVER-CHECKLIST.txt"
+echo.
+choice /c YN /n /m "Have you checked the server folders? Y = build, N = stop: "
+if errorlevel 2 goto cancelled
+
 if "%APP%"=="/" (
     set "BASE=/"
     set "OUT=deploy\site"
@@ -29,7 +43,7 @@ call npx ng build --base-href %BASE%
 if errorlevel 1 goto fail
 
 echo.
-echo === [2/3] รวมไฟล์ไว้ที่ %OUT% ===
+echo === [2/3] Collect files into %OUT% ===
 if exist deploy rmdir /s /q deploy
 mkdir "%OUT%" || goto fail
 xcopy /e /i /q /y "dist\school-info-web\browser" "%OUT%" >nul || goto fail
@@ -43,23 +57,33 @@ mkdir "%OUT%\uploads"
 copy /y "server\uploads\.htaccess" "%OUT%\uploads\.htaccess" >nul || goto fail
 
 echo.
-echo === [3/3] ไฟล์ฐานข้อมูลและคู่มือ ===
+echo === [3/3] Copy database files and documentation ===
 mkdir "deploy\database"
 copy /y "server\database\install.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\historical-2566-2568.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\five-aspects-content-2566-2568.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\cleanup-duplicate-topics.sql" "deploy\database\" >nul || goto fail
 copy /y "server\DEPLOY.md" "deploy\DEPLOY.md" >nul
+copy /y "server\SERVER-CHECKLIST.txt" "deploy\SERVER-CHECKLIST.txt" >nul
 
 echo.
-echo ===== เสร็จแล้ว =====
-echo  อัปโหลดโฟลเดอร์  %OUT%  ขึ้นเซิร์ฟเวอร์ (มีไฟล์ซ่อน .htaccess ด้วย)
-echo  ขั้นตอนทั้งหมดอยู่ใน deploy\DEPLOY.md
+echo ===== BUILD COMPLETED =====
+echo  Upload %OUT% to the server, including hidden .htaccess files.
+echo  Instructions: deploy\DEPLOY.md
+echo  Server checklist: deploy\SERVER-CHECKLIST.txt
 echo.
 explorer deploy
 pause
 exit /b 0
 
+:cancelled
+echo.
+echo Build cancelled. Check the website and backup folders with the server administrator first.
+pause
+exit /b 0
+
 :fail
 echo.
-echo !!!!! เกิดข้อผิดพลาด ดูข้อความด้านบน !!!!!
+echo !!!!! BUILD FAILED - SEE THE ERROR ABOVE !!!!!
 pause
 exit /b 1
