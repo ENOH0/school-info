@@ -1,3 +1,40 @@
+// ฟอนต์ราชการฝังมากับเว็บ ไม่ต้องติดตั้งในเครื่องผู้ใช้
+@font-face {
+  font-family: 'TH Sarabun PSK';
+  src: url('/fonts/THSarabunPSKRegular.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 400;
+  size-adjust: 130%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TH Sarabun PSK';
+  src: url('/fonts/THSarabunPSKBold.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 600 700;
+  size-adjust: 155%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TH Sarabun PSK';
+  src: url('/fonts/THSarabunPSKItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 400;
+  size-adjust: 130%;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'TH Sarabun PSK';
+  src: url('/fonts/THSarabunPSKBoldItalic.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 600 700;
+  size-adjust: 130%;
+  font-display: swap;
+}
+
 // ===== ธีมหลักของทั้งเว็บ =====
 // แก้สีหรือฟอนต์ที่นี่ที่เดียว ทุกหน้าจะเปลี่ยนตาม
 
@@ -31,7 +68,7 @@
   --shadow-md: 0 8px 24px rgb(30 64 175 / 0.12);
   --shadow-lg: 0 18px 40px rgb(30 64 175 / 0.22);
 
-  --font: 'IBM Plex Sans Thai', 'Noto Sans Thai', system-ui, sans-serif;
+  --font: 'TH Sarabun PSK', 'Sarabun', sans-serif;
 }
 
 *,
@@ -52,6 +89,13 @@ body {
   color: var(--ink);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--font);
 }
 
 h1,
