@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AdminApi } from '../../core/admin-api.service';
 import { AdminState } from '../../core/admin-state.service';
 import { AuthService } from '../../core/auth.service';
-import { CHAPTERS, ChartConfig, Column, Frequency, TopicKind, chapterLabel } from '../../core/admin.model';
+import { CHAPTERS, ChartConfig, Column, TopicKind, chapterLabel } from '../../core/admin.model';
 import { apiError } from '../../core/api-error';
 
 // คอลัมน์สำเร็จรูป กดแล้วเติมให้ แก้ต่อได้
@@ -81,13 +81,6 @@ const PRESETS: { name: string; cols: PresetCol[] }[] = [
             <span><strong>ความเรียง</strong> — ข้อความหลายย่อหน้า</span></label>
         </fieldset>
 
-        <fieldset [disabled]="locked()">
-          <legend>กรอกบ่อยแค่ไหน</legend>
-          <label class="choice"><input type="radio" name="freq" value="term" [(ngModel)]="frequency" />
-            <span><strong>ทุกภาคเรียน</strong> — เช่น จำนวนนักเรียน ผลการเรียน</span></label>
-          <label class="choice"><input type="radio" name="freq" value="year" [(ngModel)]="frequency" />
-            <span><strong>ปีละครั้ง</strong> — เช่น งบประมาณ O-NET (แสดงในทุกเล่มของปีนั้น)</span></label>
-        </fieldset>
         @if (locked()) {
           <p class="muted note">หัวข้อนี้มีข้อมูลแล้ว จึงเปลี่ยนฝ่าย รูปแบบ และความถี่ไม่ได้ (แก้ชื่อและคอลัมน์ได้)</p>
         }
@@ -169,7 +162,7 @@ const PRESETS: { name: string; cols: PresetCol[] }[] = [
                   <p class="muted note flush">แกนนอนใช้คอลัมน์ข้อความแรก (เช่น ระดับชั้น) แถว "รวม" ไม่อยู่ในกราฟ</p>
                   <label class="chk">
                     <input type="checkbox" name="chartTrend" [(ngModel)]="chartTrend" />
-                    แสดงกราฟเส้นเทียบยอดรวมกับ{{ frequency === 'year' ? 'ปีการศึกษา' : 'ภาคเรียน' }}ก่อน ๆ ด้วย
+                    แสดงกราฟแท่งเทียบยอดรวมกับปีการศึกษาก่อน ๆ ด้วย
                   </label>
                 } @else {
                   <p class="warn note flush">ต้องมีคอลัมน์ชนิดตัวเลขหรือผลรวมก่อน จึงจะทำกราฟได้</p>
@@ -178,7 +171,7 @@ const PRESETS: { name: string; cols: PresetCol[] }[] = [
             </div>
 
             @if (!isNew()) {
-              <p class="muted note">ลบคอลัมน์แล้ว ข้อมูลในคอลัมน์นั้นจะไม่แสดงอีก เพิ่มคอลัมน์ใหม่ได้ ภาคเรียนเก่าจะว่างไว้</p>
+              <p class="muted note">ลบคอลัมน์แล้ว ข้อมูลในคอลัมน์นั้นจะไม่แสดงอีก เพิ่มคอลัมน์ใหม่ได้ ข้อมูลปีเก่าจะว่างไว้</p>
             }
           </div>
         }
@@ -265,7 +258,6 @@ export class TopicForm {
   chapter = 0;
   title = '';
   kind: TopicKind = 'table';
-  frequency: Frequency = 'term';
   columns = signal<Column[]>([]);
   chartType: 'none' | ChartConfig['type'] = 'none';
   chartSeries: string[] = [];
@@ -299,7 +291,6 @@ export class TopicForm {
         this.chapter = t.chapter;
         this.title = t.title;
         this.kind = t.kind;
-        this.frequency = t.frequency;
         this.columns.set(t.columns.length ? t.columns.map((c) => ({ ...c })) : [{ key: 'c1', label: '', type: 'text' }]);
         this.recordCount.set(t.recordCount);
         if (t.chart) {
@@ -425,7 +416,6 @@ export class TopicForm {
         chapter: this.chapter,
         title: this.title.trim(),
         kind: this.kind,
-        frequency: this.frequency,
         columns: this.kind === 'table' ? this.cleanColumns() : [],
         chart: this.kind === 'table' ? this.chartPayload() : { type: 'none' },
       })

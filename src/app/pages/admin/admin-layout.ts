@@ -18,6 +18,7 @@ import { apiError } from '../../core/api-error';
             <a routerLink="/admin/overview" routerLinkActive="on">ภาพรวม</a>
           }
           <a routerLink="/admin" [class.on]="isDataPage()">{{ auth.isAdmin() ? 'ข้อมูลรายฝ่าย' : 'ข้อมูลของฝ่าย' }}</a>
+          <a routerLink="/admin/raw-documents" routerLinkActive="on">ข้อมูลดิบของฝ่าย</a>
           @if (auth.isAdmin()) {
             <a routerLink="/admin/terms" routerLinkActive="on">ปีการศึกษา</a>
             <a routerLink="/admin/users" routerLinkActive="on">ผู้ใช้</a>

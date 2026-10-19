@@ -5,29 +5,23 @@ import { AdminState } from '../../core/admin-state.service';
 import { periodLabel } from '../../core/admin.model';
 import { apiError } from '../../core/api-error';
 
-// จัดการปีการศึกษา/ภาคเรียน (เฉพาะผู้ดูแลระบบ)
+// จัดการปีการศึกษา (เฉพาะผู้ดูแลระบบ)
 @Component({
   selector: 'app-terms-page',
   imports: [FormsModule],
   template: `
-    <h1 class="page-title">ปีการศึกษาและภาคเรียน</h1>
-    <p class="muted">เพิ่มภาคเรียนใหม่ก่อนเปิดให้ฝ่ายต่าง ๆ กรอกข้อมูล ภาคเรียน "ปัจจุบัน" จะถูกเลือกไว้ให้อัตโนมัติ</p>
+    <h1 class="page-title">ปีการศึกษา</h1>
+    <p class="muted">เพิ่มปีการศึกษาใหม่ก่อนเปิดให้ฝ่ายต่าง ๆ กรอกข้อมูล ปี "ปัจจุบัน" จะถูกเลือกไว้ให้อัตโนมัติ</p>
     <p class="muted">
-      <strong>เผยแพร่</strong> = เล่มขึ้นหน้าสาธารณะให้คนนอกเห็น และ<strong>ล็อก</strong> ฝ่ายต่าง ๆ แก้ข้อมูลของภาคเรียนนั้นไม่ได้
-      (ข้อมูลรายปีของปีนั้นถูกล็อกด้วย) ถ้าต้องแก้ ให้กด "ยกเลิกเผยแพร่" ก่อน
+      <strong>เผยแพร่</strong> = เล่มขึ้นหน้าสาธารณะให้คนนอกเห็น และ<strong>ล็อก</strong> ฝ่ายต่าง ๆ แก้ข้อมูลของปีนั้นไม่ได้
+      ถ้าต้องแก้ ให้กด "ยกเลิกเผยแพร่" ก่อน
     </p>
 
     <form class="card add row-gap" (ngSubmit)="add()">
       <label class="field">ปีการศึกษา
         <input class="input" type="number" name="year" [(ngModel)]="year" min="2500" max="2700" />
       </label>
-      <label class="field">ภาคเรียน
-        <select class="select" name="term" [(ngModel)]="term">
-          <option [ngValue]="1">1</option>
-          <option [ngValue]="2">2</option>
-        </select>
-      </label>
-      <button class="btn primary" type="submit" [disabled]="busy()">+ เพิ่มภาคเรียน</button>
+      <button class="btn primary" type="submit" [disabled]="busy()">+ เพิ่มปีการศึกษา</button>
     </form>
 
     @if (message()) {
@@ -38,7 +32,7 @@ import { apiError } from '../../core/api-error';
       @for (t of terms(); track t.id) {
         <li class="item">
           <span class="name">
-            {{ label(t.academicYear, t.term) }}
+            {{ label(t.academicYear, 0) }}
             @if (t.isPublished) {
               <span class="pub">● เผยแพร่แล้ว</span>
               <small class="muted">{{ t.publishedAt }}</small>
@@ -47,12 +41,10 @@ import { apiError } from '../../core/api-error';
             }
           </span>
           <span class="acts">
-            @if (t.term > 0) {
-              @if (t.isCurrent) {
-                <span class="badge">ภาคเรียนปัจจุบัน</span>
-              } @else {
-                <button class="btn ghost sm" (click)="setCurrent(t.id)" [disabled]="busy()">ตั้งเป็นปัจจุบัน</button>
-              }
+            @if (t.isCurrent) {
+              <span class="badge">ปีปัจจุบัน</span>
+            } @else {
+              <button class="btn ghost sm" (click)="setCurrent(t.id)" [disabled]="busy()">ตั้งเป็นปัจจุบัน</button>
             }
             @if (t.isPublished) {
               @if (confirmId() === t.id) {
@@ -72,7 +64,7 @@ import { apiError } from '../../core/api-error';
           </span>
         </li>
       } @empty {
-        <li class="item muted">ยังไม่มีภาคเรียน</li>
+        <li class="item muted">ยังไม่มีปีการศึกษา</li>
       }
     </ul>
   `,
@@ -99,10 +91,8 @@ export class TermsPage {
   isError = signal(false);
 
   year = new Date().getFullYear() + 543;
-  term = 1;
-
   add() {
-    this.run(this.api.addTerm(Number(this.year), this.term), `เพิ่มภาคเรียน ${this.term}/${this.year} แล้ว`);
+    this.run(this.api.addTerm(Number(this.year)), `เพิ่มปีการศึกษา ${this.year} แล้ว`);
   }
 
   confirmId = signal(0);
@@ -113,7 +103,7 @@ export class TermsPage {
   }
 
   setCurrent(id: number) {
-    this.run(this.api.setCurrentTerm(id), 'ตั้งภาคเรียนปัจจุบันแล้ว');
+    this.run(this.api.setCurrentTerm(id), 'ตั้งปีการศึกษาปัจจุบันแล้ว');
   }
 
   private run(req: ReturnType<AdminApi['addTerm']>, okText: string) {

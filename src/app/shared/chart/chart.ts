@@ -6,13 +6,14 @@ import { ChartBlock } from '../../core/book.model';
 //   line = เส้น
 //   pie  = วงกลม (คอลัมน์แรกคอลัมน์เดียว)
 
-const COLORS = ['#1d4ed8', '#0ea5e9', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#64748b', '#ec4899'];
+// ชุดสีสดใสที่ยังมีความเข้มพอให้มองเห็นชัดบนพื้นขาว
+const COLORS = ['#2563eb', '#06b6d4', '#14b8a6', '#22c55e', '#84cc16', '#eab308', '#f97316', '#ef4444', '#ec4899', '#a855f7', '#8b5cf6'];
 const H = 300;
 const M = { top: 20, right: 16, bottom: 52, left: 64 };
 
 interface Bar { x: number; y: number; w: number; h: number; color: string; tip: string; label: string; lx: number; ly: number }
 interface Tick { y: number; text: string }
-interface XLabel { x: number; text: string; full: string }
+interface XLabel { x: number; y: number; text: string; full: string; rotate: boolean; dense: boolean; transform: string }
 interface Line { color: string; points: string; dots: { x: number; y: number; tip: string; label: string }[] }
 interface Slice { d: string; color: string; tip: string; name: string; value: string; pct: string }
 
@@ -71,7 +72,7 @@ function cut(text: string, max: number): string {
       } @else {
         @let g = grid();
         <div class="scroll">
-          <svg [attr.viewBox]="'0 0 ' + g.width + ' ' + H" [style.min-width.px]="g.width > 640 ? g.width : null"
+          <svg [attr.viewBox]="'0 0 ' + g.width + ' ' + g.height" [style.min-width.px]="g.width > 640 ? g.width : null"
             role="img" [attr.aria-label]="aria()">
             @for (t of g.ticks; track $index) {
               <line [attr.x1]="M.left" [attr.x2]="g.width - M.right" [attr.y1]="t.y" [attr.y2]="t.y" class="grid" />
@@ -79,7 +80,9 @@ function cut(text: string, max: number): string {
             }
             <line [attr.x1]="M.left" [attr.x2]="g.width - M.right" [attr.y1]="g.zeroY" [attr.y2]="g.zeroY" class="axis" />
             @for (l of g.xLabels; track $index) {
-              <text [attr.x]="l.x" [attr.y]="H - M.bottom + 18" class="xl" text-anchor="middle">{{ l.text }}<title>{{ l.full }}</title></text>
+              <text [attr.x]="l.x" [attr.y]="l.y" class="xl" [class.rotated]="l.rotate"
+                [class.dense]="l.dense"
+                [attr.text-anchor]="l.rotate ? 'end' : 'middle'" [attr.transform]="l.transform || null">{{ l.text }}<title>{{ l.full }}</title></text>
             }
 
             @if (c.kind === 'bar') {
@@ -122,6 +125,8 @@ function cut(text: string, max: number): string {
     .axis { stroke: #94a3b8; stroke-width: 1; }
     .tick { font-size: 11px; fill: #64748b; }
     .xl { font-size: 12px; fill: #334155; }
+    .xl.rotated { font-size: 11px; }
+    .xl.rotated.dense { font-size: 10px; }
     .val { font-size: 11px; fill: #0f172a; font-weight: 600; }
     .line { fill: none; stroke-width: 2.5; stroke-linejoin: round; stroke-linecap: round; }
     .dot { stroke: #fff; stroke-width: 1.5; }
@@ -154,10 +159,28 @@ export class Chart {
   grid = computed(() => {
     const c = this.data();
     const n = c.labels.length;
-    const perGroup = c.kind === 'bar' ? Math.max(48, c.series.length * 22 + 16) : 56;
+    const totalBars = n * Math.max(1, c.series.length);
+    const longestLabel = Math.max(0, ...c.labels.map((label) => Array.from(label).length));
+    const rotateLabels = c.kind === 'bar' && longestLabel > 10;
+    // นับจำนวนแท่งจริงรวมทุก series เพื่อให้กราฟหลายชุดไม่กินพื้นที่เกินจำเป็น
+    const denseLabels = c.kind === 'bar' && totalBars > 8;
+    const crowdedBars = c.kind === 'bar' && totalBars > 20;
+    const normalGroup = c.kind === 'bar'
+      ? Math.max(denseLabels ? 40 : 48, c.series.length * (denseLabels ? 18 : 22) + (denseLabels ? 10 : 16))
+      : 56;
+    // กราฟที่มีหลายแท่งใช้ระยะต่อกลุ่มแบบกระชับ และเอียงชื่อมากขึ้นเพื่อลดการซ้อนกัน
+    const labelGroup = denseLabels
+      ? (crowdedBars ? 48 : 54)
+      : Math.min(110, Math.max(64, longestLabel * 3.5));
+    const perGroup = rotateLabels ? Math.max(normalGroup, labelGroup) : normalGroup;
+    const labelAngle = denseLabels ? -55 : -40;
+    const bottom = rotateLabels
+      ? Math.min(180, Math.max(denseLabels ? 110 : 88, longestLabel * (denseLabels ? 4.2 : 3.5)))
+      : M.bottom;
+    const height = H + bottom - M.bottom;
     const width = Math.max(640, M.left + M.right + n * perGroup);
     const plotW = width - M.left - M.right;
-    const plotH = H - M.top - M.bottom;
+    const plotH = height - M.top - bottom;
 
     const all = c.series.flatMap((s) => s.values).filter((v): v is number => typeof v === 'number');
     let max = Math.max(0, ...all);
@@ -176,17 +199,30 @@ export class Chart {
 
     const band = plotW / Math.max(1, n);
     const maxChars = Math.max(3, Math.floor(band / 8));
-    const xLabels: XLabel[] = c.labels.map((full, i) => ({ x: M.left + band * (i + 0.5), text: cut(full, maxChars), full }));
+    const labelY = height - bottom + 18;
+    const xLabels: XLabel[] = c.labels.map((full, i) => {
+      const x = M.left + band * (i + 0.5);
+      return {
+        x,
+        y: labelY,
+        text: rotateLabels ? full : cut(full, maxChars),
+        full,
+        rotate: rotateLabels,
+        dense: denseLabels,
+        transform: rotateLabels ? `rotate(${labelAngle} ${x} ${labelY})` : '',
+      };
+    });
 
-    return { width, band, y, zeroY: y(0), ticks, xLabels };
+    return { width, height, band, y, zeroY: y(0), ticks, xLabels };
   });
 
   bars = computed<Bar[]>(() => {
     const c = this.data();
     const g = this.grid();
     const k = c.series.length;
-    const inner = g.band * 0.75;
-    const w = Math.min(40, inner / k);
+    const dense = c.labels.length * Math.max(1, k) > 8;
+    const inner = g.band * (dense ? 0.97 : 0.75);
+    const w = Math.min(dense ? 52 : 40, inner / k);
     const showVal = c.labels.length * k <= 24;
     const out: Bar[] = [];
     c.labels.forEach((label, i) => {
@@ -198,7 +234,9 @@ export class Chart {
         const h = Math.max(1, Math.abs(g.y(v) - g.zeroY));
         const x = start + j * w;
         out.push({
-          x: x + 1, y: top, w: Math.max(2, w - 2), h, color: this.color(j),
+          // กราฟชุดเดียวใช้สีสลับตามหมวดหมู่ ส่วนหลายชุดคงสีตาม series เพื่อให้อ่าน legend ได้ถูกต้อง
+          x: x + 0.5, y: top, w: Math.max(2, w - 1), h,
+          color: this.color(c.series.length === 1 ? i : j),
           tip: `${label} · ${s.name}: ${fmt(v)}`,
           label: showVal ? short(v) : '',
           lx: x + w / 2, ly: v >= 0 ? top - 5 : top + h + 13,
@@ -226,9 +264,18 @@ export class Chart {
     const c = this.data();
     const s = c.series[0];
     if (!s) return [];
-    const items = c.labels
+    const rawItems = c.labels
       .map((name, i) => ({ name, v: s.values[i] }))
       .filter((x): x is { name: string; v: number } => typeof x.v === 'number' && x.v > 0);
+    // วงกลมที่มีส่วนย่อยมากเกินไปอ่านยาก: แสดง 9 รายการหลักและรวมที่เหลือเป็น "อื่น ๆ"
+    const items = rawItems.length > 10
+      ? (() => {
+          const sorted = [...rawItems].sort((a, b) => b.v - a.v);
+          const main = sorted.slice(0, 9);
+          const rest = sorted.slice(9);
+          return [...main, { name: `อื่น ๆ (${rest.length} รายการ)`, v: rest.reduce((sum, x) => sum + x.v, 0) }];
+        })()
+      : rawItems;
     const total = items.reduce((a, x) => a + x.v, 0);
     if (!total) return [];
     const cx = 120, cy = 120, r = 110;

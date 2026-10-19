@@ -21,7 +21,7 @@ export interface Department {
 export interface Term {
   id: number;
   academicYear: number;
-  term: number; // 0 = แถวรายปี
+  term: 0; // ค่าภายในสำหรับข้อมูลรายปี ระบบไม่แบ่งภาคเรียนแล้ว
   isCurrent: boolean;
   isPublished: boolean; // เผยแพร่แล้ว = ล็อก แก้ไม่ได้
   publishedAt: string | null;
@@ -36,7 +36,7 @@ export interface Column {
 }
 
 export type TopicKind = 'table' | 'text';
-export type Frequency = 'term' | 'year';
+export type Frequency = 'year';
 
 /** หมวดของเล่มสารสนเทศ (ต้องตรงกับ chapters() ใน api/lib.php) */
 export const CHAPTERS: { no: number; name: string }[] = [
@@ -70,16 +70,16 @@ export interface Topic {
   updatedAt: string | null;
   updatedByName: string | null;
   canEdit: boolean;
-  locked: boolean; // ข้อมูลภาคเรียนนี้ล็อกแล้ว (เล่มเผยแพร่แล้ว)
+  locked: boolean; // ข้อมูลปีนี้ล็อกแล้ว (เล่มเผยแพร่แล้ว)
   structureLocked: boolean; // หัวข้ออยู่ในเล่มที่เผยแพร่แล้ว แก้ชื่อ/คอลัมน์/ลำดับไม่ได้
-  copiedFrom: string | null; // คัดลอกจากครั้งก่อนแล้วยังไม่ได้ตรวจ เช่น "ภาคเรียนที่ 1/2569"
+  copiedFrom: string | null; // คัดลอกจากปีก่อนแล้วยังไม่ได้ตรวจ
 }
 
 /** กราฟในเล่มของหัวข้อแบบตาราง */
 export interface ChartConfig {
   type: 'bar' | 'line' | 'pie';
   series: string[]; // คอลัมน์ตัวเลขที่จะแสดง (วงกลมใช้คอลัมน์แรก)
-  trend: boolean; // แสดงกราฟเทียบภาคเรียน/ปีก่อน ๆ ด้วย
+  trend: boolean; // แสดงกราฟเทียบปีก่อน ๆ ด้วย
 }
 
 export interface TopicDetail {
@@ -107,12 +107,12 @@ export interface ImageItem {
 export interface RecordResponse {
   topic: Omit<TopicDetail, 'recordCount' | 'structureLocked' | 'chart'>;
   academicYear: number;
-  term: number;
+  term: 0;
   locked: boolean;
   data: { rows?: Row[]; text?: string; images?: ImageItem[]; copiedFrom?: string } | null;
   updatedAt: string | null;
   updatedByName: string | null;
-  previous: { academicYear: number; term: number } | null; // ครั้งล่าสุดก่อนหน้านี้ที่มีข้อมูล
+  previous: { academicYear: number; term: 0 } | null; // ปีล่าสุดก่อนหน้านี้ที่มีข้อมูล
 }
 
 /** ผลการคัดลอกจากครั้งก่อน */
@@ -138,12 +138,29 @@ export interface DeptProgress {
 
 export interface ProgressResponse {
   academicYear: number;
-  term: number;
+  term: 0;
   published: boolean;
   departments: DeptProgress[];
 }
 
-/** ชื่อภาคเรียนสำหรับแสดงผล */
+/** ชื่อปีการศึกษาสำหรับแสดงผล */
 export function periodLabel(year: number, term: number): string {
-  return term === 0 ? `ปีการศึกษา ${year} (รายปี)` : `ภาคเรียนที่ ${term}/${year}`;
+  return `ปีการศึกษา ${year}`;
+}
+
+export interface RawDocument {
+  id: number;
+  departmentId: number;
+  departmentName: string;
+  academicYear: number;
+  originalName: string;
+  description: string;
+  senderName: string | null;
+  mimeType: string;
+  fileSize: number;
+  uploadedAt: string;
+  uploadedByName: string;
+  deletedAt: string | null;
+  canEdit: boolean;
+  openMode: 'inline' | 'download';
 }

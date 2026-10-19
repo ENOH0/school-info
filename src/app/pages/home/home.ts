@@ -42,16 +42,13 @@ export class Home {
   // ปีที่เลือกในแถบกรอง (null = ทั้งหมด)
   selectedYear = signal<number | null>(null);
 
-  // จัดกลุ่มเล่มตามปี
-  groups = computed(() => {
+  // เล่มที่แสดง เรียงปีใหม่ไปเก่าในกริดเดียว
+  visibleBooks = computed(() => {
     const all = this.books() ?? [];
     const sel = this.selectedYear();
-    return this.years()
-      .filter((y) => sel === null || y === sel)
-      .map((y) => ({
-        year: y,
-        books: all.filter((b) => b.academicYear === y).sort((a, b) => b.term - a.term),
-      }));
+    return all
+      .filter((b) => sel === null || b.academicYear === sel)
+      .sort((a, b) => b.academicYear - a.academicYear);
   });
 
   latestYear = computed(() => this.years()[0] ?? '-');

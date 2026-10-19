@@ -4,7 +4,7 @@
 export interface BookSummary {
   id: number;
   academicYear: number; // ปีการศึกษา เช่น 2569
-  term: number; // 0 = รายปี, 1 หรือ 2 = ภาคเรียน
+  term: 0; // ค่าภายในสำหรับข้อมูลรายปี
   title: string;
   hasData?: boolean; // false = ยังไม่มีฝ่ายใดกรอกข้อมูล
   published?: boolean; // false = ยังไม่เผยแพร่ (คนนอกไม่เห็นเนื้อหา)
@@ -56,7 +56,7 @@ export interface TableBlock {
   foot?: (string | number)[]; // แถว "รวม" ท้ายตาราง (คำนวณอัตโนมัติ)
 }
 
-/** ข้อความบอกว่าเป็นเล่มรายปีหรือรายภาคเรียน */
+/** ข้อความบนปกของเล่มรายปี */
 export function termLabel(term: number): string {
-  return term === 0 ? 'รายปี' : `ภาคเรียนที่ ${term}`;
+  return 'ข้อมูลรายปี';
 }

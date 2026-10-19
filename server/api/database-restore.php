@@ -11,8 +11,8 @@ if (($_POST['confirm'] ?? '') !== 'RESTORE') {
 if (!isset($_FILES['backup']) || $_FILES['backup']['error'] !== UPLOAD_ERR_OK) {
     fail('กรุณาเลือกไฟล์สำรอง');
 }
-if ((int) $_FILES['backup']['size'] > 250 * 1024 * 1024) {
-    fail('ไฟล์สำรองต้องมีขนาดไม่เกิน 250 MB');
+if ((int) $_FILES['backup']['size'] > 1024 * 1024 * 1024) {
+    fail('ไฟล์สำรองต้องมีขนาดไม่เกิน 1 GB');
 }
 
 $raw = file_get_contents($_FILES['backup']['tmp_name']);
@@ -27,7 +27,7 @@ try {
     restore_backup_payload($payload);
     $counts = [];
     foreach (backup_tables() as $table => $columns) {
-        $counts[$table] = count($payload['tables'][$table]);
+        $counts[$table] = isset($payload['tables'][$table]) && is_array($payload['tables'][$table]) ? count($payload['tables'][$table]) : 0;
     }
     $scope = isset($payload['scope']) ? $payload['scope'] : ['type' => 'all'];
     json_out(['ok' => true, 'automaticBackup' => $automatic, 'counts' => $counts, 'scope' => $scope]);

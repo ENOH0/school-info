@@ -1,9 +1,9 @@
 <?php
-// บันทึกข้อมูลของหัวข้อ ในภาคเรียนที่เลือก
-// ตาราง:     {"topicId": 3, "academicYear": 2569, "term": 1, "rows": [{"c1": "ม.1", "c2": 150}]}
-// ความเรียง: {"topicId": 4, "academicYear": 2569, "term": 1, "text": "..."}
+// บันทึกข้อมูลของหัวข้อ ในปีการศึกษาที่เลือก
+// ตาราง:     {"topicId": 3, "academicYear": 2569, "rows": [{"c1": "ม.1", "c2": 150}]}
+// ความเรียง: {"topicId": 4, "academicYear": 2569, "text": "..."}
 // ทั้งสองแบบแนบรูปได้: "images": [{"file": "abc.jpg", "caption": "คำบรรยาย"}]
-// ส่งตารางว่างหรือข้อความว่าง และไม่มีรูป = ลบข้อมูลของภาคเรียนนั้น
+// ส่งตารางว่างหรือข้อความว่าง และไม่มีรูป = ลบข้อมูลของปีนั้น
 require __DIR__ . '/lib.php';
 require_method('POST');
 $me = require_login();
@@ -15,18 +15,14 @@ if (!can_edit_department($me, $topic['department_id'])) {
 }
 
 $year = isset($in['academicYear']) ? (int) $in['academicYear'] : 0;
-$term = record_term($topic, isset($in['term']) ? (int) $in['term'] : 0);
-
-if ($topic['frequency'] === 'term' && $term === 0) {
-    fail('หัวข้อรายภาคเรียนต้องเลือกภาคเรียนที่ 1 หรือ 2');
-}
+$term = 0;
 
 require_period_unlocked($year, $term);
 
 $chk = db()->prepare('SELECT COUNT(*) FROM terms WHERE academic_year = ? AND term = ?');
 $chk->execute([$year, $term]);
 if (!(int) $chk->fetchColumn()) {
-    fail('ไม่พบปีการศึกษา/ภาคเรียนนี้ในระบบ');
+    fail('ไม่พบปีการศึกษานี้ในระบบ');
 }
 
 // ===== ตรวจและจัดรูปข้อมูล =====

@@ -11,10 +11,9 @@ if (!can_edit_department($me, $topic['department_id'])) {
     fail('อัปโหลดได้เฉพาะหัวข้อของฝ่ายตัวเอง', 403);
 }
 
-// ห้ามอัปโหลดเข้าหัวข้อที่อยู่ในช่วงที่เผยแพร่แล้ว (ส่ง year/term มาด้วย)
+// ห้ามอัปโหลดเข้าหัวข้อของปีที่เผยแพร่แล้ว
 if (isset($_POST['year'])) {
-    $t = isset($_POST['term']) ? (int) $_POST['term'] : 0;
-    require_period_unlocked((int) $_POST['year'], $topic['frequency'] === 'year' ? 0 : $t);
+    require_period_unlocked((int) $_POST['year'], 0);
 }
 
 if (!isset($_FILES['file']) || $_FILES['file']['error'] !== UPLOAD_ERR_OK) {

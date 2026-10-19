@@ -9,12 +9,25 @@ function backup_tables()
         'users' => ['id', 'username', 'password_hash', 'display_name', 'role', 'department_id', 'is_active', 'created_at', 'last_login_at'],
         'topics' => ['id', 'department_id', 'chapter', 'title', 'kind', 'frequency', 'columns_json', 'chart_json', 'sort_order', 'created_at'],
         'records' => ['id', 'topic_id', 'academic_year', 'term', 'data_json', 'updated_by', 'updated_at'],
+        'raw_documents' => ['id', 'department_id', 'academic_year', 'original_name', 'stored_name', 'mime_type', 'file_size', 'description', 'sender_name', 'uploaded_by', 'uploaded_at', 'updated_at', 'deleted_at', 'deleted_by'],
     ];
 }
 
 function backup_uploads_dir()
 {
     return function_exists('uploads_dir') ? uploads_dir() : dirname(__DIR__) . DIRECTORY_SEPARATOR . 'uploads';
+}
+
+function backup_raw_documents_dir()
+{
+    return dirname(__DIR__) . DIRECTORY_SEPARATOR . 'raw-uploads';
+}
+
+function make_raw_files_payload($rows)
+{
+    $out=[];$dir=backup_raw_documents_dir();
+    foreach($rows as $row){$file=basename((string)$row['stored_name']);$path=$dir.DIRECTORY_SEPARATOR.$file;if(!is_file($path))continue;$raw=file_get_contents($path);if($raw===false)throw new RuntimeException('อ่านเอกสารดิบ '.$row['original_name'].' ไม่สำเร็จ');$out[]=['file'=>$file,'data'=>base64_encode($raw)];}
+    return $out;
 }
 
 function referenced_upload_files($records)
@@ -55,7 +68,7 @@ function make_backup_payload($academicYear = null)
     $academicYear = $academicYear === null ? null : (int) $academicYear;
     $payload = [
         'format' => 'school-info-backup',
-        'version' => 2,
+        'version' => 3,
         'generatedAt' => date(DATE_ATOM),
         'database' => DB_NAME,
         'scope' => $academicYear === null
@@ -66,7 +79,7 @@ function make_backup_payload($academicYear = null)
     foreach (backup_tables() as $table => $columns) {
         $sql = 'SELECT ' . implode(', ', $columns) . ' FROM ' . $table;
         $params = [];
-        if ($academicYear !== null && ($table === 'terms' || $table === 'records')) {
+        if ($academicYear !== null && ($table === 'terms' || $table === 'records' || $table === 'raw_documents')) {
             $sql .= ' WHERE academic_year = ?';
             $params[] = $academicYear;
         }
@@ -76,6 +89,7 @@ function make_backup_payload($academicYear = null)
         $payload['tables'][$table] = $stmt->fetchAll();
     }
     $payload['uploads'] = make_uploads_payload($payload['tables']['records']);
+    $payload['rawFiles'] = make_raw_files_payload($payload['tables']['raw_documents']);
     return $payload;
 }
 
@@ -91,7 +105,7 @@ function encode_backup($payload)
 function validate_backup_payload($payload)
 {
     $version = (int) ($payload['version'] ?? 0);
-    if (!is_array($payload) || ($payload['format'] ?? '') !== 'school-info-backup' || !in_array($version, [1, 2], true)) {
+    if (!is_array($payload) || ($payload['format'] ?? '') !== 'school-info-backup' || !in_array($version, [1, 2, 3], true)) {
         throw new RuntimeException('ไฟล์นี้ไม่ใช่ไฟล์สำรองของระบบสารสนเทศโรงเรียน');
     }
     if (!isset($payload['tables']) || !is_array($payload['tables'])) {
@@ -105,6 +119,7 @@ function validate_backup_payload($payload)
         throw new RuntimeException('ปีการศึกษาในไฟล์สำรองไม่ถูกต้อง');
     }
     foreach (backup_tables() as $table => $columns) {
+        if ($table === 'raw_documents' && $version < 3) continue;
         if (!isset($payload['tables'][$table]) || !is_array($payload['tables'][$table])) {
             throw new RuntimeException('ไฟล์สำรองไม่มีตาราง ' . $table);
         }
@@ -149,6 +164,13 @@ function validate_backup_payload($payload)
             throw new RuntimeException('รายการข้อมูลในไฟล์สำรองอ้างอิงผู้ใช้ที่ไม่มีอยู่');
         }
     }
+    foreach (($version >= 3 ? $payload['tables']['raw_documents'] : []) as $row) {
+        $rawDepartmentId = (int) $row['department_id'];
+        $rawUploadedBy = (int) $row['uploaded_by'];
+        if (!isset($ids['departments'][$rawDepartmentId]) || !isset($ids['users'][$rawUploadedBy])) {
+            throw new RuntimeException('เอกสารดิบอ้างอิงฝ่ายหรือผู้ใช้ที่ไม่มีอยู่');
+        }
+    }
     $hasAdmin = false;
     foreach ($payload['tables']['users'] as $user) {
         if ($user['role'] === 'admin' && (int) $user['is_active'] === 1) {
@@ -163,12 +185,17 @@ function validate_backup_payload($payload)
         $year = (int) $scope['academicYear'];
         foreach ($payload['tables']['terms'] as $row) {
             if ((int) $row['academic_year'] !== $year) {
-                throw new RuntimeException('ไฟล์สำรองมีภาคเรียนของปีอื่นปะปนอยู่');
+                throw new RuntimeException('ไฟล์สำรองมีรายการปีการศึกษาอื่นปะปนอยู่');
             }
         }
         foreach ($payload['tables']['records'] as $row) {
             if ((int) $row['academic_year'] !== $year) {
                 throw new RuntimeException('ไฟล์สำรองมีข้อมูลของปีอื่นปะปนอยู่');
+            }
+        }
+        foreach (($version >= 3 ? $payload['tables']['raw_documents'] : []) as $row) {
+            if ((int) $row['academic_year'] !== $year) {
+                throw new RuntimeException('ไฟล์สำรองมีเอกสารดิบของปีอื่นปะปนอยู่');
             }
         }
     }
@@ -194,6 +221,11 @@ function validate_backup_payload($payload)
                 throw new RuntimeException('รูปประกอบในไฟล์สำรองมีขนาดรวมเกิน 200 MB');
             }
         }
+    }
+    if ($version >= 3) {
+        if (!isset($payload['rawFiles']) || !is_array($payload['rawFiles'])) throw new RuntimeException('ไฟล์สำรองไม่มีเอกสารดิบ');
+        $totalBytes=0;
+        foreach($payload['rawFiles'] as $upload){$file=isset($upload['file'])?(string)$upload['file']:'';if($file===''||basename($file)!==$file||!preg_match('/^[a-f0-9]{40}\.(pdf|doc|docx|xls|xlsx)$/',$file))throw new RuntimeException('ชื่อไฟล์เอกสารดิบไม่ถูกต้อง');$raw=base64_decode((string)($upload['data']??''),true);if($raw===false)throw new RuntimeException('ข้อมูลไฟล์เอกสารดิบไม่ถูกต้อง');$totalBytes+=strlen($raw);if($totalBytes>1024*1024*1024)throw new RuntimeException('เอกสารดิบในไฟล์สำรองมีขนาดรวมเกิน 1 GB');}
     }
 }
 
@@ -231,9 +263,19 @@ function restore_backup_uploads($payload)
     }
 }
 
+function restore_backup_raw_files($payload)
+{
+    if((int)($payload['version']??1)<3)return;$dir=backup_raw_documents_dir();if(!is_dir($dir)&&!mkdir($dir,0750,true))throw new RuntimeException('สร้างโฟลเดอร์เอกสารดิบไม่สำเร็จ');
+    foreach($payload['rawFiles'] as $upload){$raw=base64_decode((string)$upload['data'],true);if($raw===false||file_put_contents($dir.DIRECTORY_SEPARATOR.$upload['file'],$raw,LOCK_EX)===false)throw new RuntimeException('กู้คืนเอกสารดิบไม่สำเร็จ');}
+}
+
 function restore_backup_payload($payload)
 {
     validate_backup_payload($payload);
+    if ((int)($payload['version'] ?? 1) < 3) {
+        $payload['tables']['raw_documents'] = [];
+        $payload['rawFiles'] = [];
+    }
     $pdo = db();
     $tables = backup_tables();
     $scope = isset($payload['scope']) ? $payload['scope'] : ['type' => 'all'];
@@ -252,6 +294,7 @@ function restore_backup_payload($payload)
                 }
             }
             $pdo->prepare('DELETE FROM records WHERE academic_year = ?')->execute([$year]);
+            $pdo->prepare('DELETE FROM raw_documents WHERE academic_year = ?')->execute([$year]);
             $pdo->prepare('DELETE FROM terms WHERE academic_year = ?')->execute([$year]);
             $hasCurrent = false;
             foreach ($payload['tables']['terms'] as $term) {
@@ -264,15 +307,18 @@ function restore_backup_payload($payload)
             $recordColumns = array_values(array_filter($tables['records'], function ($column) { return $column !== 'id'; }));
             insert_backup_rows($pdo, 'terms', $termColumns, $payload['tables']['terms']);
             insert_backup_rows($pdo, 'records', $recordColumns, $payload['tables']['records']);
+            $rawColumns = array_values(array_filter($tables['raw_documents'], function ($column) { return $column !== 'id'; }));
+            insert_backup_rows($pdo, 'raw_documents', $rawColumns, $payload['tables']['raw_documents']);
         } else {
-            foreach (['records', 'topics', 'users', 'terms', 'departments'] as $table) {
+            foreach (['raw_documents', 'records', 'topics', 'users', 'terms', 'departments'] as $table) {
                 $pdo->exec('DELETE FROM ' . $table);
             }
-            foreach (['departments', 'terms', 'users', 'topics', 'records'] as $table) {
+            foreach (['departments', 'terms', 'users', 'topics', 'records', 'raw_documents'] as $table) {
                 insert_backup_rows($pdo, $table, $tables[$table], $payload['tables'][$table]);
             }
         }
         restore_backup_uploads($payload);
+        restore_backup_raw_files($payload);
         $pdo->commit();
     } catch (Throwable $e) {
         if ($pdo->inTransaction()) {

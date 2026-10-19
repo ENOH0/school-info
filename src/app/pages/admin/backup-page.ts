@@ -9,7 +9,7 @@ import { AdminState } from '../../core/admin-state.service';
     <div class="head">
       <div>
         <h1 class="page-title">สำรองและกู้คืนข้อมูล</h1>
-        <p class="muted">สำหรับผู้ดูแลระบบเท่านั้น ไฟล์สำรองมีข้อมูลผู้ใช้ หัวข้อ ข้อมูลรายปี และรูปประกอบที่เกี่ยวข้อง</p>
+        <p class="muted">สำหรับผู้ดูแลระบบเท่านั้น ไฟล์สำรองรวมฐานข้อมูล รูปประกอบ และไฟล์ข้อมูลดิบของฝ่าย</p>
       </div>
     </div>
 
@@ -21,7 +21,7 @@ import { AdminState } from '../../core/admin-state.service';
           <p>เลือกสำรองทั้งระบบ หรือเลือกเฉพาะปีการศึกษาที่ต้องการ</p>
           <label class="field">ขอบเขตข้อมูล
             <select #scopeBox class="select" [value]="backupYear()" (change)="backupYear.set(+scopeBox.value)">
-              <option value="0">ทุกปีและทุกภาคเรียน</option>
+              <option value="0">ทุกปีการศึกษา</option>
               @for (year of years(); track year) {
                 <option [value]="year">เฉพาะปีการศึกษา {{ year }}</option>
               }
@@ -111,7 +111,7 @@ export class BackupPage {
           const parsed = JSON.parse(raw);
           const version = Number(parsed?.version);
           const scopeType = parsed?.scope?.type ?? 'all';
-          if (parsed?.format !== 'school-info-backup' || ![1, 2].includes(version) || !['all', 'year'].includes(scopeType)) {
+          if (parsed?.format !== 'school-info-backup' || ![1, 2, 3].includes(version) || !['all', 'year'].includes(scopeType)) {
             throw new Error('invalid backup');
           }
           const year = Number(parsed?.scope?.academicYear);
@@ -122,7 +122,7 @@ export class BackupPage {
             ? { type: 'year' as const, academicYear: year }
             : { type: 'all' as const };
           this.fileScope.set(scope);
-          this.legacyFile.set(version === 1);
+          this.legacyFile.set(version < 3);
         } catch {
           this.error.set('อ่านรายละเอียดไฟล์ไม่ได้ กรุณาเลือกไฟล์สำรอง .json ที่สร้างจากระบบนี้');
         }

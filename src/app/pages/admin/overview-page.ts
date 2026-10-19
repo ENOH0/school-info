@@ -5,7 +5,7 @@ import { AdminState } from '../../core/admin-state.service';
 import { DeptProgress, ProgressResponse, periodLabel } from '../../core/admin.model';
 import { apiError } from '../../core/api-error';
 
-// ภาพรวมความคืบหน้า: ภาคเรียนนี้แต่ละฝ่ายกรอกไปกี่หัวข้อ (เฉพาะผู้ดูแลระบบ)
+// ภาพรวมความคืบหน้า: ปีนี้แต่ละฝ่ายกรอกไปกี่หัวข้อ (เฉพาะผู้ดูแลระบบ)
 @Component({
   selector: 'app-overview-page',
   imports: [RouterLink],
@@ -13,13 +13,13 @@ import { apiError } from '../../core/api-error';
     <div class="head">
       <div>
         <h1 class="page-title">ภาพรวมการกรอกข้อมูล</h1>
-        <p class="muted">ดูว่าแต่ละฝ่ายกรอกข้อมูลของภาคเรียนนี้ไปแล้วกี่หัวข้อ จะได้รู้ว่าต้องตามฝ่ายไหน</p>
+        <p class="muted">ดูว่าแต่ละฝ่ายกรอกข้อมูลของปีนี้ไปแล้วกี่หัวข้อ จะได้รู้ว่าต้องตามฝ่ายไหน</p>
       </div>
-      <label class="field">ภาคเรียน
+      <label class="field">ปีการศึกษา
         <select class="select" (change)="state.termId.set(+$any($event.target).value)">
           @for (t of state.dataTerms(); track t.id) {
             <option [value]="t.id" [selected]="t.id === state.termId()">
-              {{ label(t.academicYear, t.term) }}{{ t.isCurrent ? ' (ปัจจุบัน)' : '' }}{{ t.isPublished ? ' · เผยแพร่แล้ว' : '' }}
+              {{ label(t.academicYear, 0) }}{{ t.isCurrent ? ' (ปัจจุบัน)' : '' }}{{ t.isPublished ? ' · เผยแพร่แล้ว' : '' }}
             </option>
           }
         </select>
@@ -36,7 +36,7 @@ import { apiError } from '../../core/api-error';
           <span>{{ percent(totalFilled(), totalTopics()) }}%</span>
         </div>
         <div>
-          <div class="total-title">{{ label(data()!.academicYear, data()!.term) }}</div>
+          <div class="total-title">{{ label(data()!.academicYear, 0) }}</div>
           <div class="muted">กรอกแล้ว {{ totalFilled() }} จาก {{ totalTopics() }} หัวข้อ · ครบแล้ว {{ doneDepts() }} จาก {{ data()!.departments.length }} ฝ่าย</div>
           @if (data()!.published) {
             <span class="badge pub">🔒 เผยแพร่แล้ว</span>
@@ -75,7 +75,7 @@ import { apiError } from '../../core/api-error';
                   @for (m of d.missing; track m.id) {
                     <li>
                       <a [routerLink]="['/admin/topics', m.id, 'data']">{{ m.title }}</a>
-                      <span class="muted small"> · {{ m.chapter }}{{ m.frequency === 'year' ? ' · รายปี' : '' }}</span>
+                      <span class="muted small"> · {{ m.chapter }}</span>
                     </li>
                   }
                 </ul>
@@ -144,14 +144,14 @@ export class OverviewPage {
   constructor() {
     effect(() => {
       const t = this.state.term();
-      if (t) untracked(() => this.load(t.academicYear, t.term));
+      if (t) untracked(() => this.load(t.academicYear));
     });
   }
 
-  private load(year: number, term: number) {
+  private load(year: number) {
     this.data.set(null);
     this.error.set('');
-    this.api.progress(year, term).subscribe({
+    this.api.progress(year).subscribe({
       next: (r) => this.data.set(r),
       error: (e) => this.error.set(apiError(e)),
     });

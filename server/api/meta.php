@@ -1,5 +1,5 @@
 <?php
-// ข้อมูลพื้นฐานสำหรับหน้าจัดการ: รายชื่อฝ่าย และปีการศึกษา/ภาคเรียน
+// ข้อมูลพื้นฐานสำหรับหน้าจัดการ: รายชื่อฝ่าย และปีการศึกษา
 require __DIR__ . '/lib.php';
 require_login();
 
@@ -16,6 +16,6 @@ $terms = array_map(function ($t) {
         'isPublished'  => (int) $t['is_published'] === 1,
         'publishedAt'  => $t['published_at'],
     ];
-}, db()->query('SELECT id, academic_year, term, is_current, is_published, published_at FROM terms ORDER BY academic_year DESC, term DESC')->fetchAll());
+}, db()->query('SELECT id, academic_year, term, is_current, is_published, published_at FROM terms WHERE term = 0 ORDER BY academic_year DESC')->fetchAll());
 
 json_out(['departments' => $departments, 'terms' => $terms]);

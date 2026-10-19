@@ -6,7 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { Topic, chapterLabel, periodLabel } from '../../core/admin.model';
 import { apiError } from '../../core/api-error';
 
-// หน้าแรกของส่วนจัดการ: เลือกภาคเรียน + ฝ่าย แล้วดูว่าหัวข้อไหนกรอกแล้ว/ยังไม่กรอก
+// หน้าแรกของส่วนจัดการ: เลือกปีการศึกษา + ฝ่าย แล้วดูว่าหัวข้อไหนกรอกแล้ว/ยังไม่กรอก
 @Component({
   selector: 'app-topics-page',
   imports: [RouterLink],
@@ -15,18 +15,18 @@ import { apiError } from '../../core/api-error';
       <div>
         @if (auth.isAdmin()) {
           <h1 class="page-title">ข้อมูลรายฝ่าย</h1>
-          <p class="muted">เลือกภาคเรียนและฝ่าย แล้วกรอกข้อมูลในแต่ละหัวข้อ</p>
+          <p class="muted">เลือกปีการศึกษาและฝ่าย แล้วกรอกข้อมูลในแต่ละหัวข้อ</p>
         } @else {
           <h1 class="page-title">{{ state.dept()?.name }}</h1>
-          <p class="muted">เลือกภาคเรียน แล้วกรอกข้อมูลในแต่ละหัวข้อของฝ่าย</p>
+          <p class="muted">เลือกปีการศึกษา แล้วกรอกข้อมูลในแต่ละหัวข้อของฝ่าย</p>
         }
       </div>
       <div class="row-gap">
-        <label class="field">ภาคเรียน
+        <label class="field">ปีการศึกษา
           <select class="select" (change)="state.termId.set(+$any($event.target).value)">
             @for (t of state.dataTerms(); track t.id) {
               <option [value]="t.id" [selected]="t.id === state.termId()">
-                {{ label(t.academicYear, t.term) }}{{ t.isCurrent ? ' (ปัจจุบัน)' : '' }}
+                {{ label(t.academicYear, 0) }}{{ t.isCurrent ? ' (ปัจจุบัน)' : '' }}
               </option>
             }
           </select>
@@ -47,20 +47,20 @@ import { apiError } from '../../core/api-error';
 
     @if (!state.term()) {
       <p class="alert err">
-        ยังไม่มีภาคเรียนในระบบ
-        @if (auth.isAdmin()) { <a routerLink="/admin/terms">เพิ่มภาคเรียน</a> } @else { กรุณาติดต่อผู้ดูแลระบบ }
+        ยังไม่มีปีการศึกษาในระบบ
+        @if (auth.isAdmin()) { <a routerLink="/admin/terms">เพิ่มปีการศึกษา</a> } @else { กรุณาติดต่อผู้ดูแลระบบ }
       </p>
     } @else {
       @if (state.term()!.isPublished) {
         <p class="alert lock">
-          🔒 เล่มภาคเรียนนี้<strong>เผยแพร่แล้ว</strong> ข้อมูลถูกล็อก แก้ไขไม่ได้
+          🔒 เล่มปีการศึกษานี้<strong>เผยแพร่แล้ว</strong> ข้อมูลถูกล็อก แก้ไขไม่ได้
           {{ auth.isAdmin() ? '(ยกเลิกเผยแพร่ได้ที่แท็บ "ปีการศึกษา")' : '(ถ้าต้องแก้ ติดต่อผู้ดูแลระบบให้ยกเลิกเผยแพร่)' }}
         </p>
       }
       <div class="summary">
         <div>
           <strong>{{ state.dept()?.name }}</strong>
-          <span class="muted"> · {{ label(state.term()!.academicYear, state.term()!.term) }}</span>
+          <span class="muted"> · {{ label(state.term()!.academicYear, 0) }}</span>
           @if (topics().length) {
             <div class="progress" [attr.aria-label]="'กรอกแล้ว ' + filled() + ' จาก ' + topics().length">
               <div class="progress-bar" [style.width.%]="(filled() / topics().length) * 100"></div>
@@ -84,7 +84,7 @@ import { apiError } from '../../core/api-error';
         <div class="copybox">
           <p>
             คัดลอกข้อมูล<strong>ครั้งล่าสุดก่อนหน้านี้</strong>มาใส่หัวข้อที่ยังว่าง {{ emptyCount() }} หัวข้อ
-            (รายภาคเรียนจะเอาจากภาคเรียนก่อน · รายปีจะเอาจากปีการศึกษาก่อน)
+            จากปีการศึกษาก่อน
           </p>
           <p class="muted small">หัวข้อที่กรอกแล้วจะไม่ถูกแทนที่ · หลังคัดลอกต้องเปิดแต่ละหัวข้อเพื่อแก้ตัวเลขให้เป็นปัจจุบันแล้วกด "บันทึก"</p>
           <div class="row-gap">
@@ -120,7 +120,6 @@ import { apiError } from '../../core/api-error';
                 <div class="meta">
                   <span class="badge chap">{{ chapterName(t.chapter) }}</span>
                   <span class="badge">{{ t.kind === 'table' ? 'ตาราง' : 'ความเรียง' }}</span>
-                  <span class="badge">{{ t.frequency === 'year' ? 'รายปี' : 'รายภาคเรียน' }}</span>
                   @if (t.copiedFrom) {
                     <span class="badge copied">คัดลอกจาก{{ t.copiedFrom }} · ยังไม่ตรวจ</span>
                   } @else if (t.hasData) {
@@ -211,20 +210,20 @@ export class TopicsPage {
   chapterName = chapterLabel;
 
   constructor() {
-    // โหลดรายการใหม่ทุกครั้งที่เปลี่ยนฝ่ายหรือภาคเรียน
+    // โหลดรายการใหม่ทุกครั้งที่เปลี่ยนฝ่ายหรือปีการศึกษา
     effect(() => {
       const dept = this.state.deptId();
       const term = this.state.term();
       this.notice.set('');
       this.confirmCopy.set(false);
-      if (dept && term) this.load(dept, term.academicYear, term.term);
+      if (dept && term) this.load(dept, term.academicYear);
     });
   }
 
-  private load(dept: number, year: number, term: number) {
+  private load(dept: number, year: number) {
     this.loading.set(true);
     this.error.set('');
-    this.api.topics(dept, year, term).subscribe({
+    this.api.topics(dept, year).subscribe({
       next: (list) => {
         this.topics.set(list);
         this.loading.set(false);
@@ -241,13 +240,13 @@ export class TopicsPage {
     const dept = this.state.deptId()!;
     this.busy.set(true);
     this.error.set('');
-    this.api.copyPrevious(dept, term.academicYear, term.term).subscribe({
+    this.api.copyPrevious(dept, term.academicYear).subscribe({
       next: (r) => {
         this.busy.set(false);
         this.confirmCopy.set(false);
         const extra = r.noPrevious ? ` · ${r.noPrevious} หัวข้อไม่มีข้อมูลครั้งก่อน ต้องกรอกเอง` : '';
         this.notice.set(r.copied ? `คัดลอกแล้ว ${r.copied} หัวข้อ${extra}` : `ไม่มีข้อมูลครั้งก่อนให้คัดลอก${extra}`);
-        this.load(dept, term.academicYear, term.term);
+        this.load(dept, term.academicYear);
       },
       error: (e) => {
         this.busy.set(false);
@@ -262,7 +261,7 @@ export class TopicsPage {
       next: () => {
         this.busy.set(false);
         const term = this.state.term()!;
-        this.load(this.state.deptId()!, term.academicYear, term.term);
+        this.load(this.state.deptId()!, term.academicYear);
       },
       error: (e) => {
         this.busy.set(false);

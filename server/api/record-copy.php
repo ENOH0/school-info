@@ -1,8 +1,6 @@
 <?php
-// คัดลอกข้อมูลครั้งก่อนมาใส่หัวข้อที่ยังว่าง ของฝ่ายนี้ ในภาคเรียนที่เลือก
-// POST {"departmentId": 1, "academicYear": 2569, "term": 2}
-// - หัวข้อรายภาคเรียน: คัดลอกจากภาคเรียนก่อนหน้าที่มีข้อมูล
-// - หัวข้อรายปี: คัดลอกจากปีการศึกษาก่อนหน้าที่มีข้อมูล
+// คัดลอกข้อมูลปีล่าสุดก่อนหน้ามาใส่หัวข้อที่ยังว่างของฝ่ายนี้
+// POST {"departmentId": 1, "academicYear": 2569}
 // - หัวข้อที่กรอกแล้ว หรือเล่มที่เผยแพร่แล้ว จะไม่ถูกแตะ
 require __DIR__ . '/lib.php';
 require_method('POST');
@@ -11,15 +9,15 @@ $me = require_login();
 $in     = read_json();
 $deptId = isset($in['departmentId']) ? (int) $in['departmentId'] : 0;
 $year   = isset($in['academicYear']) ? (int) $in['academicYear'] : 0;
-$term   = isset($in['term']) ? (int) $in['term'] : 0;
+$term   = 0;
 
 if (!can_edit_department($me, $deptId)) {
     fail('คัดลอกข้อมูลได้เฉพาะฝ่ายของตัวเอง', 403);
 }
 $chk = db()->prepare('SELECT COUNT(*) FROM terms WHERE academic_year = ? AND term = ?');
 $chk->execute([$year, $term]);
-if ($term < 1 || !(int) $chk->fetchColumn()) {
-    fail('ไม่พบภาคเรียนนี้ในระบบ');
+if (!(int) $chk->fetchColumn()) {
+    fail('ไม่พบปีการศึกษานี้ในระบบ');
 }
 
 $stmt = db()->prepare('SELECT * FROM topics WHERE department_id = ? ORDER BY sort_order, id');
@@ -38,7 +36,7 @@ $filled = 0;
 
 db()->beginTransaction();
 foreach ($topics as $t) {
-    $target = record_term($t, $term);
+    $target = 0;
     $has->execute([(int) $t['id'], $year, $target]);
     if ((int) $has->fetchColumn()) {
         $filled++;

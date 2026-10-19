@@ -113,23 +113,12 @@ h1 {
   }
 }
 
-.year-group {
-  margin-bottom: 40px;
-  animation: rise 0.4s ease both;
-}
-
-.year-title {
-  font-size: 18px;
-  color: var(--blue-900);
-  padding-left: 12px;
-  border-left: 4px solid var(--sky-500);
-  margin-bottom: 20px;
-}
-
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(170px, 220px));
   gap: 32px 24px;
+  justify-content: start;
+  animation: rise 0.4s ease both;
 }
 
 .skeleton {
@@ -171,7 +160,7 @@ h1 {
     min-width: 0;
   }
   .grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
     gap: 24px 16px;
   }
 }

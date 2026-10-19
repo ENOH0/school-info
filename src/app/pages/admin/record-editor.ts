@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { apiError } from '../../core/api-error';
 import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc';
 
-// หน้ากรอกข้อมูลของหัวข้อ ในภาคเรียนที่เลือก   /admin/topics/5/data
+// หน้ากรอกข้อมูลของหัวข้อ ในปีการศึกษาที่เลือก   /admin/topics/5/data
 // ตาราง: กรอกทีละช่อง หรือคัดลอกจาก Excel มาวาง | ความเรียง: พิมพ์ข้อความ
 @Component({
   selector: 'app-record-editor',
@@ -27,13 +27,12 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
           <h1 class="page-title">{{ t.title }}</h1>
           <p class="muted">
             {{ period() }}
-            @if (t.frequency === 'year') { · หัวข้อรายปี ใช้ร่วมกันทุกภาคเรียนของปีนี้ }
           </p>
         </div>
-        <label class="field">เปลี่ยนภาคเรียน
+        <label class="field">เปลี่ยนปีการศึกษา
           <select class="select" (change)="changeTerm(+$any($event.target).value)">
             @for (x of state.dataTerms(); track x.id) {
-              <option [value]="x.id" [selected]="x.id === state.termId()">{{ label(x.academicYear, x.term) }}</option>
+              <option [value]="x.id" [selected]="x.id === state.termId()">{{ label(x.academicYear, 0) }}</option>
             }
           </select>
         </label>
@@ -52,7 +51,7 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
         </p>
       } @else if (t.canEdit && res()!.previous && !res()!.updatedAt) {
         <div class="alert prev">
-          <span>ภาคเรียนนี้ยังไม่มีข้อมูล · มีข้อมูลครั้งก่อนของ<strong>{{ prevLabel() }}</strong></span>
+          <span>ปีนี้ยังไม่มีข้อมูล · มีข้อมูลของ<strong>{{ prevLabel() }}</strong></span>
           <button class="btn primary sm" (click)="pullPrevious()" [disabled]="pulling()">
             {{ pulling() ? 'กำลังดึง…' : 'ดึงข้อมูลครั้งก่อนมาแก้ต่อ' }}
           </button>
@@ -204,14 +203,14 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
           @if (res()!.updatedAt) {
             บันทึกล่าสุด {{ res()!.updatedAt }}{{ res()!.updatedByName ? ' โดย ' + res()!.updatedByName : '' }}
           } @else {
-            ยังไม่มีข้อมูลในภาคเรียนนี้
+            ยังไม่มีข้อมูลในปีการศึกษานี้
           }
           @if (dirty()) { <strong class="unsaved"> · มีการแก้ไขที่ยังไม่บันทึก</strong> }
         </span>
         @if (t.canEdit) {
           <div class="row-gap">
             @if (confirmClear()) {
-              <button class="btn danger sm" (click)="clear()">ยืนยันล้างข้อมูลภาคเรียนนี้</button>
+              <button class="btn danger sm" (click)="clear()">ยืนยันล้างข้อมูลปีนี้</button>
               <button class="btn ghost sm" (click)="confirmClear.set(false)">ไม่ล้าง</button>
             } @else if (res()!.updatedAt) {
               <button class="btn danger sm" (click)="confirmClear.set(true)">ล้างข้อมูล</button>
@@ -353,12 +352,12 @@ export class RecordEditor {
 
   prevLabel = computed(() => {
     const p = this.res()?.previous;
-    return p ? (p.term === 0 ? `ปีการศึกษา ${p.academicYear}` : `ภาคเรียนที่ ${p.term}/${p.academicYear}`) : '';
+    return p ? `ปีการศึกษา ${p.academicYear}` : '';
   });
 
   period = computed(() => {
     const r = this.res();
-    return r ? periodLabel(r.academicYear, r.term) : '';
+    return r ? periodLabel(r.academicYear, 0) : '';
   });
   sumOf = rowSum;
   fmt = formatNumber;
@@ -370,22 +369,22 @@ export class RecordEditor {
   colNames = computed(() => (this.res()?.topic.columns ?? []).filter((c) => c.type !== 'sum').map((c) => c.label).join(', '));
 
   constructor() {
-    // โหลดใหม่เมื่อเปลี่ยนหัวข้อหรือภาคเรียน
+    // โหลดใหม่เมื่อเปลี่ยนหัวข้อหรือปีการศึกษา
     effect(() => {
       const id = Number(this.id());
       const term = this.state.term();
-      if (term) untracked(() => this.load(id, term.academicYear, term.term));
+      if (term) untracked(() => this.load(id, term.academicYear));
     });
   }
 
   /** quiet = โหลดใหม่หลังบันทึก ไม่ล้างหน้าจอ */
-  private load(id: number, year: number, term: number, quiet = false) {
+  private load(id: number, year: number, quiet = false) {
     if (!quiet) {
       this.res.set(null);
       this.message.set('');
     }
     this.confirmClear.set(false);
-    this.api.record(id, year, term).subscribe({
+    this.api.record(id, year).subscribe({
       next: (r) => {
         this.text = r.data?.text ?? '';
         this.images.set((r.data?.images ?? []).map((x) => ({ ...x })));
@@ -401,7 +400,7 @@ export class RecordEditor {
   }
 
   changeTerm(termId: number) {
-    if (this.dirty() && !confirm('มีการแก้ไขที่ยังไม่บันทึก ต้องการเปลี่ยนภาคเรียนหรือไม่?')) {
+    if (this.dirty() && !confirm('มีการแก้ไขที่ยังไม่บันทึก ต้องการเปลี่ยนปีการศึกษาหรือไม่?')) {
       return;
     }
     this.state.termId.set(termId);
@@ -460,14 +459,14 @@ export class RecordEditor {
         ? { text: clear ? '' : this.text, images }
         : { rows: clear ? [] : this.rows(), images };
     this.api
-      .saveRecord({ topicId: r.topic.id, academicYear: r.academicYear, term: r.term, ...body })
+      .saveRecord({ topicId: r.topic.id, academicYear: r.academicYear, ...body })
       .subscribe({
         next: (out) => {
           this.busy.set(false);
           this.dirty.set(false);
           this.show(out.deleted ? 'ล้างข้อมูลแล้ว' : 'บันทึกแล้ว', false);
           const term = this.state.term()!;
-          this.load(r.topic.id, term.academicYear, term.term, true); // โหลดใหม่ เวลาบันทึกล่าสุดจะอัปเดต
+          this.load(r.topic.id, term.academicYear, true); // โหลดใหม่ เวลาบันทึกล่าสุดจะอัปเดต
         },
         error: (e) => {
           this.busy.set(false);
@@ -492,7 +491,7 @@ export class RecordEditor {
     this.pulling.set(true);
     this.message.set('');
     try {
-      const old = await firstValueFrom(this.api.record(r.topic.id, p.academicYear, p.term));
+      const old = await firstValueFrom(this.api.record(r.topic.id, p.academicYear));
       const cols = r.topic.columns;
       this.text = old.data?.text ?? '';
       this.rows.set((old.data?.rows ?? []).map((row) => this.blankRow(cols, row)));
@@ -521,7 +520,7 @@ export class RecordEditor {
       this.uploading.update((n) => n + 1);
       try {
         const blob = await shrinkImage(f, 1600);
-        const out = await firstValueFrom(this.api.uploadImage(topicId, r.academicYear, r.term, blob, f.name.replace(/\.\w+$/, '') + '.jpg'));
+        const out = await firstValueFrom(this.api.uploadImage(topicId, r.academicYear, blob, f.name.replace(/\.\w+$/, '') + '.jpg'));
         this.images.update((list) => [...list, { file: out.file, caption: '' }]);
         this.dirty.set(true);
       } catch (e) {

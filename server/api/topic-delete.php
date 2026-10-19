@@ -13,7 +13,7 @@ if (!can_edit_department($me, $topic['department_id'])) {
 $cnt = db()->prepare('SELECT COUNT(*) FROM records WHERE topic_id = ?');
 $cnt->execute([(int) $topic['id']]);
 if ((int) $cnt->fetchColumn() > 0) {
-    fail('หัวข้อนี้มีข้อมูลแล้ว ลบไม่ได้ ต้องลบข้อมูลทุกภาคเรียนออกก่อน', 409);
+    fail('หัวข้อนี้มีข้อมูลแล้ว ลบไม่ได้ ต้องลบข้อมูลทุกปีออกก่อน', 409);
 }
 
 db()->prepare('DELETE FROM topics WHERE id = ?')->execute([(int) $topic['id']]);

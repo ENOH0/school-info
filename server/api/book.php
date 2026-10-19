@@ -1,7 +1,6 @@
 <?php
 // เล่มสารสนเทศ 1 เล่ม พร้อมเนื้อหาทุกหัวข้อ (สาธารณะ ไม่ต้องล็อกอิน)
-// GET book.php?id=2   (id = รหัสภาคเรียนในตาราง terms)
-// เล่มรายภาคเรียนรวมหัวข้อรายปีของปีนั้นด้วย
+// GET book.php?id=2   (id = รหัสปีการศึกษาในตาราง terms)
 // เรียงตามหมวด 1–10 (หมวด 0 "อื่น ๆ" อยู่ท้าย) แล้วตามฝ่ายและลำดับหัวข้อ
 require __DIR__ . '/lib.php';
 
@@ -14,7 +13,7 @@ if (!$t) {
 $year = (int) $t['academic_year'];
 $term = (int) $t['term'];
 $published = (int) $t['is_published'] === 1;
-$title = $term === 0 ? "สารสนเทศ ปีการศึกษา $year" : "สารสนเทศ ภาคเรียนที่ $term/$year";
+$title = "สารสนเทศ ปีการศึกษา $year";
 
 // ยังไม่เผยแพร่: คนนอกไม่เห็นเนื้อหา / ผู้ที่ล็อกอินเห็นได้ (ไว้ตรวจก่อนเผยแพร่)
 if (!$published && !current_user()) {
@@ -30,10 +29,10 @@ $stmt = db()->prepare(
        FROM records r
        JOIN topics tp ON tp.id = r.topic_id
        JOIN departments d ON d.id = tp.department_id
-      WHERE r.academic_year = ? AND (r.term = ? OR r.term = 0)
+      WHERE r.academic_year = ? AND r.term = 0
       ORDER BY (tp.chapter = 0), tp.chapter, d.sort_order, d.id, tp.sort_order, tp.id'
 );
-$stmt->execute([$year, $term]);
+$stmt->execute([$year]);
 
 $loggedIn = current_user() !== null;
 $sections = [];
@@ -158,7 +157,7 @@ function col_label($cols, $key)
     return $key;
 }
 
-/** กราฟของตารางในภาคเรียนนี้: แกนนอน = คอลัมน์ข้อความแรก (เช่น ระดับชั้น) */
+/** กราฟของตารางในปีนี้: แกนนอน = คอลัมน์ข้อความแรก (เช่น ระดับชั้น) */
 function automatic_chart($cols)
 {
     $series = [];
@@ -208,28 +207,19 @@ function chart_block($chart, $cols, $rows, $topicTitle)
 }
 
 /**
- * กราฟเส้นเทียบย้อนหลัง: ยอดรวมของแต่ละคอลัมน์ ในแต่ละภาคเรียน (หรือแต่ละปี) ไม่เกิน 8 ช่วงล่าสุด
+ * กราฟแท่งเทียบย้อนหลัง: ยอดรวมของแต่ละคอลัมน์ในแต่ละปี ไม่เกิน 8 ปีล่าสุด
  * คนทั่วไปเห็นเฉพาะช่วงที่เผยแพร่แล้ว (และช่วงของเล่มนี้)
  */
 function trend_block($row, $chart, $cols, $loggedIn)
 {
     $year = (int) $row['academic_year'];
     $term = (int) $row['record_term'];
-    if ($term === 0) {
-        $stmt = db()->prepare(
-            'SELECT academic_year, term, data_json FROM records
-              WHERE topic_id = ? AND term = 0 AND academic_year <= ?
-              ORDER BY academic_year DESC LIMIT 20'
-        );
-        $stmt->execute([(int) $row['id'], $year]);
-    } else {
-        $stmt = db()->prepare(
-            'SELECT academic_year, term, data_json FROM records
-              WHERE topic_id = ? AND term > 0 AND (academic_year < ? OR (academic_year = ? AND term <= ?))
-              ORDER BY academic_year DESC, term DESC LIMIT 20'
-        );
-        $stmt->execute([(int) $row['id'], $year, $year, $term]);
-    }
+    $stmt = db()->prepare(
+        'SELECT academic_year, term, data_json FROM records
+          WHERE topic_id = ? AND term = 0 AND academic_year <= ?
+          ORDER BY academic_year DESC LIMIT 20'
+    );
+    $stmt->execute([(int) $row['id'], $year]);
 
     $points = [];
     foreach ($stmt->fetchAll() as $r) {
@@ -264,11 +254,10 @@ function trend_block($row, $chart, $cols, $loggedIn)
             'values' => array_map(function ($p) use ($k) { return $p['totals'][$k]; }, $points),
         ];
     }
-    $what = $term === 0 ? 'ปีการศึกษา' : 'ภาคเรียน';
     return [
         'type'   => 'chart',
-        'kind'   => 'line',
-        'title'  => 'ยอดรวมทั้งตาราง เทียบแต่ละ' . $what,
+        'kind'   => 'bar',
+        'title'  => 'ยอดรวมทั้งตาราง เทียบแต่ละปีการศึกษา',
         'labels' => array_map(function ($p) { return $p['label']; }, $points),
         'series' => $series,
     ];

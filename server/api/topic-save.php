@@ -1,6 +1,6 @@
 <?php
 // สร้าง/แก้ไขหัวข้อ
-// {"id"?, "departmentId", "chapter": 0-10, "title", "kind": "table"|"text", "frequency": "term"|"year",
+// {"id"?, "departmentId", "chapter": 0-10, "title", "kind": "table"|"text",
 //  "columns": [{"key": "c1", "label": "ระดับชั้น", "type": "text"|"number"|"sum", "of"?: ["c2","c3"], "total"?: true}]}
 //  sum   = คอลัมน์ผลรวมอัตโนมัติ (บวกคอลัมน์ใน of ของแถวเดียวกัน) ไม่ต้องกรอก
 //  total = รวมคอลัมน์นี้ไว้ในแถว "รวม" ท้ายตาราง
@@ -13,7 +13,7 @@ $id     = isset($in['id']) ? (int) $in['id'] : 0;
 $deptId = isset($in['departmentId']) ? (int) $in['departmentId'] : 0;
 $title  = trim(isset($in['title']) ? (string) $in['title'] : '');
 $kind   = (isset($in['kind']) && $in['kind'] === 'text') ? 'text' : 'table';
-$freq   = (isset($in['frequency']) && $in['frequency'] === 'year') ? 'year' : 'term';
+$freq   = 'year';
 $chapter = isset($in['chapter']) ? (int) $in['chapter'] : 0;
 if (!array_key_exists($chapter, chapters())) {
     $chapter = 0;
@@ -98,12 +98,12 @@ if (!can_edit_department($me, $old['department_id'])) {
     fail('แก้ไขได้เฉพาะหัวข้อของฝ่ายตัวเอง', 403);
 }
 
-// ถ้ามีข้อมูลแล้ว ห้ามเปลี่ยนชนิดและความถี่ เพราะข้อมูลเดิมจะใช้ไม่ได้
+// ถ้ามีข้อมูลแล้ว ห้ามเปลี่ยนชนิดหรือฝ่าย เพราะข้อมูลเดิมจะใช้ไม่ได้
 $cnt = db()->prepare('SELECT COUNT(*) FROM records WHERE topic_id = ?');
 $cnt->execute([$id]);
 $hasRecords = (int) $cnt->fetchColumn() > 0;
-if ($hasRecords && ($kind !== $old['kind'] || $freq !== $old['frequency'] || (int) $old['department_id'] !== $deptId)) {
-    fail('หัวข้อนี้มีข้อมูลแล้ว เปลี่ยนชนิด ความถี่ หรือฝ่ายไม่ได้ (แก้ชื่อและคอลัมน์ได้)');
+if ($hasRecords && ($kind !== $old['kind'] || (int) $old['department_id'] !== $deptId)) {
+    fail('หัวข้อนี้มีข้อมูลแล้ว เปลี่ยนชนิดหรือฝ่ายไม่ได้ (แก้ชื่อและคอลัมน์ได้)');
 }
 
 db()->prepare(

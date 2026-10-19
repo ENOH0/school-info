@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ChartConfig, Column, CopyResult, Department, Frequency, ImageItem, ProgressResponse, RecordResponse, Row, Term, Topic, TopicDetail, TopicKind, UserRow } from './admin.model';
+import { ChartConfig, Column, CopyResult, Department, ImageItem, ProgressResponse, RawDocument, RecordResponse, Row, Term, Topic, TopicDetail, TopicKind, UserRow } from './admin.model';
 
 type Ok = { ok: true; id?: number };
 
@@ -13,9 +13,9 @@ export class AdminApi {
     return this.http.get<{ departments: Department[]; terms: Term[] }>('api/meta.php');
   }
 
-  // ----- ปีการศึกษา/ภาคเรียน -----
-  addTerm(academicYear: number, term: number) {
-    return this.http.post<Ok>('api/term-save.php', { academicYear, term });
+  // ----- ปีการศึกษา -----
+  addTerm(academicYear: number) {
+    return this.http.post<Ok>('api/term-save.php', { academicYear });
   }
   publishTerm(id: number, publish: boolean) {
     return this.http.post<Ok>('api/term-save.php', { id, publish });
@@ -24,14 +24,14 @@ export class AdminApi {
     return this.http.post<Ok>('api/term-save.php', { id, setCurrent: true });
   }
 
-  progress(year: number, term: number) {
-    return this.http.get<ProgressResponse>('api/progress.php', { params: { year, term } });
+  progress(year: number) {
+    return this.http.get<ProgressResponse>('api/progress.php', { params: { year } });
   }
 
   // ----- หัวข้อ -----
-  topics(departmentId: number, year: number, term: number) {
+  topics(departmentId: number, year: number) {
     return this.http.get<Topic[]>('api/topics.php', {
-      params: { department_id: departmentId, year, term },
+      params: { department_id: departmentId, year },
     });
   }
   topic(id: number) {
@@ -43,7 +43,6 @@ export class AdminApi {
     chapter: number;
     title: string;
     kind: TopicKind;
-    frequency: Frequency;
     columns: Column[];
     chart: ChartConfig | { type: 'none' };
   }) {
@@ -57,21 +56,19 @@ export class AdminApi {
   }
 
   // ----- ข้อมูลที่กรอก -----
-  record(topicId: number, year: number, term: number) {
-    return this.http.get<RecordResponse>('api/record-get.php', { params: { topic_id: topicId, year, term } });
+  record(topicId: number, year: number) {
+    return this.http.get<RecordResponse>('api/record-get.php', { params: { topic_id: topicId, year } });
   }
-  uploadImage(topicId: number, year: number, term: number, file: Blob, name: string) {
+  uploadImage(topicId: number, year: number, file: Blob, name: string) {
     const form = new FormData();
     form.append('topic_id', String(topicId));
     form.append('year', String(year));
-    form.append('term', String(term));
     form.append('file', file, name);
     return this.http.post<{ ok: true; file: string; url: string }>('api/image-upload.php', form);
   }
   saveRecord(body: {
     topicId: number;
     academicYear: number;
-    term: number;
     rows?: Row[];
     text?: string;
     images?: ImageItem[];
@@ -80,9 +77,28 @@ export class AdminApi {
   }
 
   /** คัดลอกข้อมูลครั้งก่อนมาใส่หัวข้อที่ยังว่างของฝ่าย (ไม่แทนที่หัวข้อที่กรอกแล้ว) */
-  copyPrevious(departmentId: number, academicYear: number, term: number) {
-    return this.http.post<CopyResult & { ok: true }>('api/record-copy.php', { departmentId, academicYear, term });
+  copyPrevious(departmentId: number, academicYear: number) {
+    return this.http.post<CopyResult & { ok: true }>('api/record-copy.php', { departmentId, academicYear });
   }
+
+  // ----- ข้อมูลดิบของฝ่าย -----
+  rawDocuments(year: number, departmentId: number, trash = false) {
+    return this.http.get<RawDocument[]>('api/raw-documents.php', { params: { year, department_id: departmentId, trash: trash ? 1 : 0 } });
+  }
+  uploadRawDocument(file: File, academicYear: number, departmentId: number, description: string, senderName: string) {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    form.append('academic_year', String(academicYear));
+    form.append('department_id', String(departmentId));
+    form.append('description', description);
+    form.append('sender_name', senderName);
+    return this.http.post<Ok>('api/raw-document-upload.php', form);
+  }
+  updateRawDocument(id: number, description: string, senderName: string) {
+    return this.http.post<Ok>('api/raw-document-update.php', { id, description, senderName });
+  }
+  deleteRawDocument(id: number) { return this.http.post<Ok>('api/raw-document-delete.php', { id }); }
+  restoreRawDocument(id: number) { return this.http.post<Ok>('api/raw-document-restore.php', { id }); }
 
   // ----- ผู้ใช้ -----
   changePassword(currentPassword: string, newPassword: string) {

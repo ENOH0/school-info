@@ -28,7 +28,7 @@ if ($hasConfig && extension_loaded('pdo_mysql')) {
         require __DIR__ . '/config.php';
         $pdo = db();
         $dbOk = true;
-        $need = ['departments', 'terms', 'users', 'topics', 'records'];
+        $need = ['departments', 'terms', 'users', 'topics', 'records', 'raw_documents'];
         $have = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
         $tablesOk = count(array_diff($need, $have)) === 0;
         $throttleOk = in_array('login_attempts', $have, true);
@@ -51,6 +51,9 @@ $add('สร้างผู้ดูแลระบบแล้ว', $hasAdmin, 
 $up = dirname(__DIR__) . '/uploads';
 $add('โฟลเดอร์ uploads เขียนได้', is_dir($up) && is_writable($up), 'ให้ผู้ดูแลเซิร์ฟเวอร์เปิดสิทธิ์เขียนโฟลเดอร์ uploads ให้เว็บเซิร์ฟเวอร์');
 $add('uploads มีไฟล์ .htaccess กันสคริปต์', is_file($up . '/.htaccess'), 'คัดลอก uploads/.htaccess จากชุดติดตั้ง');
+$raw = dirname(__DIR__) . '/raw-uploads';
+$add('โฟลเดอร์ raw-uploads เขียนได้', is_dir($raw) && is_writable($raw), 'สร้างโฟลเดอร์ raw-uploads และเปิดสิทธิ์เขียนให้เว็บเซิร์ฟเวอร์');
+$add('raw-uploads ป้องกันการเปิดตรง', is_file($raw . '/.htaccess'), 'คัดลอก raw-uploads/.htaccess จากชุดติดตั้ง');
 $add('หน้าเว็บ (index.html) อยู่ที่โฟลเดอร์หลัก', is_file(dirname(__DIR__) . '/index.html'), 'คัดลอกไฟล์ทั้งหมดในชุดติดตั้งไปวาง');
 $add('มีไฟล์ .htaccess ที่โฟลเดอร์หลัก', is_file(dirname(__DIR__) . '/.htaccess'), 'คัดลอก .htaccess (ไฟล์ซ่อน) ไปด้วย ไม่งั้นกด F5 แล้วจะขึ้น 404');
 

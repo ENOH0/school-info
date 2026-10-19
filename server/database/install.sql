@@ -25,8 +25,8 @@ INSERT INTO departments (code, name, sort_order) VALUES
   ('personnel', 'ฝ่ายบริหารงานบุคคล',  3),
   ('general',   'ฝ่ายบริหารทั่วไป',     4);
 
--- ปีการศึกษาและภาคเรียน (term = 0 หมายถึงข้อมูลรายปี)
--- is_published = 1 คือเล่มของภาคเรียนนี้เผยแพร่แล้ว (ล็อกข้อมูล)
+-- ปีการศึกษา (term คงไว้เป็น 0 เพื่อรองรับข้อมูลเดิม)
+-- is_published = 1 คือเล่มของปีนี้เผยแพร่แล้ว (ล็อกข้อมูล)
 CREATE TABLE terms (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
   academic_year  SMALLINT UNSIGNED NOT NULL,
@@ -39,9 +39,7 @@ CREATE TABLE terms (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 INSERT INTO terms (academic_year, term, is_current) VALUES
-  (2569, 0, 0),
-  (2569, 1, 1),
-  (2569, 2, 0);
+  (2569, 0, 1);
 
 -- ผู้ใช้
 -- role: admin = จัดการทุกอย่าง, editor = แก้ได้เฉพาะฝ่ายตัวเอง
@@ -65,7 +63,7 @@ CREATE TABLE users (
 -- หัวข้อ เช่น "จำนวนนักเรียนแยกตามระดับชั้น" ของฝ่ายวิชาการ
 -- chapter:   หมวดในเล่ม 1–10, 0 = อื่น ๆ ต่อท้ายเล่ม
 -- kind:      table = ตาราง, text = ความเรียง
--- frequency: term = กรอกทุกภาคเรียน, year = กรอกปีละครั้ง
+-- frequency คงไว้เป็น year เพื่อรองรับฐานข้อมูลเดิม
 -- columns_json: คอลัมน์ของตาราง เช่น [{"key":"c1","label":"ระดับชั้น","type":"text"}, ...]
 -- chart_json:   กราฟในเล่ม เช่น {"type":"bar","series":["c2","c3"],"trend":true} (NULL = ไม่มีกราฟ)
 CREATE TABLE topics (
@@ -74,7 +72,7 @@ CREATE TABLE topics (
   chapter        TINYINT UNSIGNED NOT NULL DEFAULT 0,
   title          VARCHAR(200) NOT NULL,
   kind           ENUM('table','text') NOT NULL,
-  frequency      ENUM('term','year') NOT NULL DEFAULT 'term',
+  frequency      ENUM('term','year') NOT NULL DEFAULT 'year',
   columns_json   TEXT NULL,
   chart_json     TEXT NULL,
   sort_order     INT NOT NULL DEFAULT 0,
@@ -85,7 +83,7 @@ CREATE TABLE topics (
     REFERENCES departments (id) ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- ข้อมูลที่กรอกในหัวข้อ 1 แถว = 1 หัวข้อ ของ 1 ภาคเรียน (หรือ 1 ปี ถ้า term = 0)
+-- ข้อมูลที่กรอกในหัวข้อ 1 แถว = 1 หัวข้อของ 1 ปี (term = 0)
 -- data_json: ตาราง = {"rows":[...]}  ความเรียง = {"text":"..."}  รูป = "images":[...]
 CREATE TABLE records (
   id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -102,6 +100,29 @@ CREATE TABLE records (
     REFERENCES topics (id) ON DELETE CASCADE,
   CONSTRAINT fk_records_user FOREIGN KEY (updated_by)
     REFERENCES users (id) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- เอกสารข้อมูลดิบของฝ่าย (ไฟล์จริงอยู่ในโฟลเดอร์ raw-uploads)
+CREATE TABLE raw_documents (
+  id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  department_id TINYINT UNSIGNED NOT NULL,
+  academic_year SMALLINT UNSIGNED NOT NULL,
+  original_name VARCHAR(255) NOT NULL,
+  stored_name VARCHAR(100) NOT NULL,
+  mime_type VARCHAR(150) NOT NULL,
+  file_size INT UNSIGNED NOT NULL,
+  description VARCHAR(1000) NOT NULL DEFAULT '',
+  sender_name VARCHAR(150) NULL,
+  uploaded_by INT UNSIGNED NOT NULL,
+  uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  deleted_at DATETIME NULL,
+  deleted_by INT UNSIGNED NULL,
+  PRIMARY KEY (id), UNIQUE KEY uq_raw_stored_name(stored_name),
+  KEY idx_raw_lookup(department_id,academic_year,deleted_at), KEY idx_raw_purge(deleted_at),
+  CONSTRAINT fk_raw_department FOREIGN KEY(department_id) REFERENCES departments(id),
+  CONSTRAINT fk_raw_uploaded_by FOREIGN KEY(uploaded_by) REFERENCES users(id),
+  CONSTRAINT fk_raw_deleted_by FOREIGN KEY(deleted_by) REFERENCES users(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ประวัติการใส่รหัสผ่านผิด (กันการเดารหัสผ่าน) ลบของเก่าเกิน 1 วันอัตโนมัติ

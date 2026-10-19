@@ -15,7 +15,7 @@ json_out([
     'chapter'      => (int) $t['chapter'],
     'title'        => $t['title'],
     'kind'         => $t['kind'],
-    'frequency'    => $t['frequency'],
+    'frequency'    => 'year',
     'columns'      => topic_columns($t),
     'chart'        => topic_chart($t),
     'recordCount'  => (int) $cnt->fetchColumn(),

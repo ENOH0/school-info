@@ -22,6 +22,7 @@ export const routes: Routes = [
       { path: 'topics/:id/edit', loadComponent: () => import('./pages/admin/topic-form').then((m) => m.TopicForm), title: page('แก้ไขหัวข้อ') },
       { path: 'topics/:id/data', loadComponent: () => import('./pages/admin/record-editor').then((m) => m.RecordEditor), title: page('กรอกข้อมูล') },
       { path: 'account', loadComponent: () => import('./pages/admin/account-page').then((m) => m.AccountPage), title: page('บัญชีของฉัน') },
+      { path: 'raw-documents', loadComponent: () => import('./pages/admin/raw-documents-page').then((m) => m.RawDocumentsPage), title: page('ข้อมูลดิบของฝ่าย') },
       { path: 'overview', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/overview-page').then((m) => m.OverviewPage), title: page('ภาพรวม') },
       { path: 'terms', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/terms-page').then((m) => m.TermsPage), title: page('ปีการศึกษา') },
       { path: 'users', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/users-page').then((m) => m.UsersPage), title: page('ผู้ใช้') },

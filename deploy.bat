@@ -55,6 +55,8 @@ rem config.php มีรหัสผ่านของเครื่องน�
 if exist "%OUT%\api\config.php" del /q "%OUT%\api\config.php"
 mkdir "%OUT%\uploads"
 copy /y "server\uploads\.htaccess" "%OUT%\uploads\.htaccess" >nul || goto fail
+mkdir "%OUT%\raw-uploads"
+copy /y "server\raw-uploads\.htaccess" "%OUT%\raw-uploads\.htaccess" >nul || goto fail
 
 echo.
 echo === [3/3] Copy database files and documentation ===
@@ -63,6 +65,7 @@ copy /y "server\database\install.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\historical-2566-2568.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\five-aspects-content-2566-2568.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\cleanup-duplicate-topics.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\annual-raw-documents.sql" "deploy\database\" >nul || goto fail
 copy /y "server\DEPLOY.md" "deploy\DEPLOY.md" >nul
 copy /y "server\SERVER-CHECKLIST.txt" "deploy\SERVER-CHECKLIST.txt" >nul
 

@@ -55,7 +55,7 @@ export function bookSheets(book: Book): SheetData[] {
   return sheets;
 }
 
-/** ชื่อไฟล์ เช่น สารสนเทศ ภาคเรียนที่ 1-2569.xlsx (ห้ามมี / ในชื่อไฟล์) */
+/** ชื่อไฟล์ เช่น สารสนเทศ-ปีการศึกษา-2569.xlsx */
 export function fileName(title: string): string {
   return title.replace(/[\\/:*?"<>|]/g, '-') + '.xlsx';
 }

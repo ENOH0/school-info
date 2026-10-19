@@ -349,4 +349,21 @@ INSERT INTO records (topic_id, academic_year, term, data_json, updated_by, updat
 VALUES (@topic_id, 2568, 0, CONVERT(0x7b22726f7773223a5b7b226331223a22e0b8a7e0b8b4e0b897e0b8a2e0b8b2e0b8a8e0b8b2e0b8aae0b895e0b8a3e0b98ce0b981e0b8a5e0b8b0e0b980e0b897e0b884e0b982e0b899e0b982e0b8a5e0b8a2e0b8b5222c226332223a31382c226333223a3132307d2c7b226331223a22e0b884e0b893e0b8b4e0b895e0b8a8e0b8b2e0b8aae0b895e0b8a3e0b98c222c226332223a31352c226333223a39307d2c7b226331223a22e0b8a0e0b8b2e0b8a9e0b8b2e0b895e0b988e0b8b2e0b887e0b89be0b8a3e0b8b0e0b980e0b897e0b8a8222c226332223a31342c226333223a38357d2c7b226331223a22e0b8a0e0b8b2e0b8a9e0b8b2e0b984e0b897e0b8a2222c226332223a31322c226333223a36307d2c7b226331223a22e0b8aae0b8b1e0b887e0b884e0b8a1e0b8a8e0b8b6e0b881e0b8a9e0b8b220e0b8a8e0b8b2e0b8aae0b899e0b8b2e0b981e0b8a5e0b8b0e0b8a7e0b8b1e0b892e0b899e0b898e0b8a3e0b8a3e0b8a1222c226332223a31342c226333223a37307d2c7b226331223a22e0b8aae0b8b8e0b882e0b8a8e0b8b6e0b881e0b8a9e0b8b2e0b981e0b8a5e0b8b0e0b89ee0b8a5e0b8a8e0b8b6e0b881e0b8a9e0b8b2222c226332223a382c226333223a34307d2c7b226331223a22e0b8a8e0b8b4e0b8a5e0b89be0b8b020e0b894e0b899e0b895e0b8a3e0b8b5e0b981e0b8a5e0b8b0e0b899e0b8b2e0b88fe0b8a8e0b8b4e0b8a5e0b89be0b98c222c226332223a382c226333223a34357d2c7b226331223a22e0b881e0b8b2e0b8a3e0b887e0b8b2e0b899e0b8ade0b8b2e0b88ae0b8b5e0b89e222c226332223a382c226333223a35307d2c7b226331223a22e0b8aae0b988e0b887e0b980e0b8aae0b8a3e0b8b4e0b8a1e0b881e0b8b2e0b8a3e0b8a8e0b8b6e0b881e0b8a9e0b8b22fe0b981e0b899e0b8b0e0b981e0b899e0b8a7222c226332223a352c226333223a33307d5d7d USING utf8mb4), NULL, NOW())
 ON DUPLICATE KEY UPDATE data_json = VALUES(data_json), updated_by = NULL, updated_at = VALUES(updated_at);
 
+-- หัวข้อนี้มีหมวดหมู่จำนวนมาก จึงแสดงเป็นกราฟวงกลมแทนกราฟแท่ง
+UPDATE topics
+SET chart_json = '{"type":"pie","series":["c2"],"trend":false}'
+WHERE title = 'เส้นทางศึกษาต่อหรือประกอบอาชีพของนักเรียนชั้นมัธยมศึกษาปีที่ 6';
+
+-- เลือกชนิดกราฟตามลักษณะข้อมูล: สัดส่วนใช้วงกลม และข้อมูลตามระดับชั้นใช้เส้น
+UPDATE topics SET chart_json = '{"type":"bar","series":["c2"],"trend":false}'
+WHERE title IN ('จำนวนนักเรียนแยกตามระดับชั้น (สรุปรายปี)', 'ความสามารถด้านการอ่าน-เขียนภาษาไทยและการสื่อสารระดับดี');
+UPDATE topics SET chart_json = '{"type":"bar","series":["c2","c3"],"trend":false}'
+WHERE title = 'ผลการประเมินการอ่าน คิดวิเคราะห์ และเขียนสื่อความ (สรุปรายปี)';
+UPDATE topics SET chart_json = '{"type":"pie","series":["c2"],"trend":false}'
+WHERE title = 'ผลการประเมินสมรรถภาพทางกายของนักเรียน';
+UPDATE topics SET chart_json = '{"type":"bar","series":["c4","c6","c8"],"trend":false}'
+WHERE title = 'ผลสุขภาพจิตของนักเรียนแยกตามระดับชั้น';
+UPDATE topics SET chart_json = '{"type":"bar","series":["c3"],"trend":false}'
+WHERE title = 'นักเรียนที่มีพฤติกรรมไม่พึงประสงค์แยกตามระดับชั้น';
+
 COMMIT;

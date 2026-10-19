@@ -39,18 +39,13 @@
     </div>
   } @else if (loadError()) {
     <p class="empty">โหลดข้อมูลไม่ได้ (ตอนพัฒนา: เปิด XAMPP และรัน ng serve --proxy-config proxy.conf.json)</p>
-  } @else if (groups().length === 0) {
+  } @else if (visibleBooks().length === 0) {
     <p class="empty">ยังไม่มีเล่มสารสนเทศ เล่มจะขึ้นที่นี่เมื่อมีฝ่ายกรอกข้อมูลแล้ว</p>
   } @else {
-    @for (g of groups(); track g.year) {
-      <div class="year-group">
-        <h3 class="year-title">ปีการศึกษา {{ g.year }}</h3>
-        <div class="grid">
-          @for (b of g.books; track b.id) {
-            <app-book-cover [book]="b" />
-          }
-        </div>
-      </div>
+    <div class="grid">
+      @for (b of visibleBooks(); track b.id) {
+        <app-book-cover [book]="b" />
+      }
+    </div>
     }
-  }
 </section>

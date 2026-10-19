@@ -143,20 +143,11 @@ function clean_images($raw)
 
 // ===== ล็อกหลังเผยแพร่ =====
 
-/**
- * ข้อมูลของช่วงเวลานี้ถูกล็อกหรือยัง
- * - รายภาคเรียน (term 1, 2): ล็อกเมื่อเล่มของภาคเรียนนั้นเผยแพร่แล้ว
- * - รายปี (term 0): ล็อกเมื่อมีเล่มใดเล่มหนึ่งของปีนั้นเผยแพร่แล้ว เพราะข้อมูลรายปีแสดงในทุกเล่มของปี
- */
+/** ข้อมูลของปีนี้ถูกล็อกหรือยัง */
 function period_locked($year, $term)
 {
-    if ((int) $term === 0) {
-        $stmt = db()->prepare('SELECT COUNT(*) FROM terms WHERE is_published = 1 AND academic_year = ?');
-        $stmt->execute([(int) $year]);
-    } else {
-        $stmt = db()->prepare('SELECT COUNT(*) FROM terms WHERE is_published = 1 AND academic_year = ? AND term = ?');
-        $stmt->execute([(int) $year, (int) $term]);
-    }
+    $stmt = db()->prepare('SELECT COUNT(*) FROM terms WHERE is_published = 1 AND academic_year = ? AND term = 0');
+    $stmt->execute([(int) $year]);
     return (int) $stmt->fetchColumn() > 0;
 }
 
@@ -168,7 +159,7 @@ function topic_locked($topicId)
           WHERE r.topic_id = ?
             AND EXISTS (SELECT 1 FROM terms t
                          WHERE t.is_published = 1 AND t.academic_year = r.academic_year
-                           AND (r.term = 0 OR t.term = r.term))'
+                           AND t.term = 0)'
     );
     $stmt->execute([(int) $topicId]);
     return (int) $stmt->fetchColumn() > 0;
@@ -243,10 +234,10 @@ function topic_columns($topic)
     return is_array($cols) ? $cols : [];
 }
 
-/** หัวข้อรายปีเก็บที่ term = 0 เสมอ */
+/** ระบบรายปีเก็บ term = 0 เสมอ (คอลัมน์เดิมยังคงไว้เพื่อรองรับไฟล์สำรองเก่า) */
 function record_term($topic, $term)
 {
-    return $topic['frequency'] === 'year' ? 0 : (int) $term;
+    return 0;
 }
 
 function now_str()
@@ -262,38 +253,24 @@ function text_len($s)
 
 // ===== คัดลอกจากครั้งก่อน =====
 
-/**
- * ข้อมูลครั้งล่าสุดก่อนช่วงเวลานี้ของหัวข้อ (ไว้คัดลอกมาใช้ต่อ)
- * - หัวข้อรายปี (term 0): ปีการศึกษาก่อนหน้าที่มีข้อมูล
- * - หัวข้อรายภาคเรียน: ภาคเรียนก่อนหน้าที่มีข้อมูล เช่น 2/2569 → 1/2569 → 2/2568
- * คืนค่าแถวของ records หรือ null
- */
+/** ข้อมูลปีล่าสุดก่อนปีนี้ของหัวข้อ (ไว้คัดลอกมาใช้ต่อ) */
 function previous_record($topicId, $year, $term)
 {
-    if ((int) $term === 0) {
-        $stmt = db()->prepare(
-            'SELECT * FROM records WHERE topic_id = ? AND term = 0 AND academic_year < ?
-              ORDER BY academic_year DESC LIMIT 1'
-        );
-        $stmt->execute([(int) $topicId, (int) $year]);
-    } else {
-        $stmt = db()->prepare(
-            'SELECT * FROM records WHERE topic_id = ? AND term > 0
-                AND (academic_year < ? OR (academic_year = ? AND term < ?))
-              ORDER BY academic_year DESC, term DESC LIMIT 1'
-        );
-        $stmt->execute([(int) $topicId, (int) $year, (int) $year, (int) $term]);
-    }
+    $stmt = db()->prepare(
+        'SELECT * FROM records WHERE topic_id = ? AND term = 0 AND academic_year < ?
+          ORDER BY academic_year DESC LIMIT 1'
+    );
+    $stmt->execute([(int) $topicId, (int) $year]);
     $r = $stmt->fetch();
     return $r ? $r : null;
 }
 
 function period_text($year, $term)
 {
-    return (int) $term === 0 ? 'ปีการศึกษา ' . (int) $year : 'ภาคเรียนที่ ' . (int) $term . '/' . (int) $year;
+    return 'ปีการศึกษา ' . (int) $year;
 }
 
-/** ข้อมูลที่คัดลอกมาแล้วยังไม่ได้กดบันทึก จะมีป้าย copiedFrom เช่น "ภาคเรียนที่ 1/2569" (บันทึกครั้งแรกป้ายจะหายเอง) */
+/** ข้อมูลที่คัดลอกมาแล้วยังไม่ได้กดบันทึก จะมีป้าย copiedFrom (บันทึกครั้งแรกป้ายจะหายเอง) */
 function copied_from($dataJson)
 {
     if ($dataJson === null) {
@@ -434,7 +411,7 @@ function clean_chart($raw, $columns)
 /** ป้ายชื่อช่วงเวลาบนกราฟแนวโน้ม เช่น "1/2569" หรือ "2569" */
 function period_short($year, $term)
 {
-    return (int) $term === 0 ? (string) (int) $year : (int) $term . '/' . (int) $year;
+    return (string) (int) $year;
 }
 
 // ===== กันการเดารหัสผ่าน =====

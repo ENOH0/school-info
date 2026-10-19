@@ -9,6 +9,11 @@ define('DB_NAME', 'school_info');
 define('DB_USER', 'root');
 define('DB_PASS', ''); // ← ใส่รหัสผ่านจริงตอนติดตั้ง
 
+// ขนาดไฟล์ข้อมูลดิบและอายุถังขยะ ปรับภายหลังได้
+// ค่า upload_max_filesize และ post_max_size ของ PHP ต้องมากกว่าขนาดไฟล์ด้วย
+define('RAW_DOCUMENT_MAX_BYTES', 20 * 1024 * 1024);
+define('RAW_DOCUMENT_RETENTION_DAYS', 30);
+
 // ไม่บังคับ: ที่เก็บไฟล์สำรองอัตโนมัติก่อนกู้คืน
 // ควรอยู่นอก htdocs/public_html และ PHP ต้องเขียนได้
 // ถ้าไม่กำหนด ระบบจะใช้โฟลเดอร์ school-info-backups ที่อยู่เหนือ document root
