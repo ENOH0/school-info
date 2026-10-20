@@ -6,7 +6,7 @@ import { AdminState } from '../../core/admin-state.service';
 import { Column, ImageItem, RecordResponse, Row, periodLabel } from '../../core/admin.model';
 import { firstValueFrom } from 'rxjs';
 import { apiError } from '../../core/api-error';
-import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc';
+import { formatNumber, hasTotal, rowSum, tableWarnings, totalRow } from '../../core/table-calc';
 
 // หน้ากรอกข้อมูลของหัวข้อ ในปีการศึกษาที่เลือก   /admin/topics/5/data
 // ตาราง: กรอกทีละช่อง หรือคัดลอกจาก Excel มาวาง | ความเรียง: พิมพ์ข้อความ
@@ -100,6 +100,26 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
           </div>
         }
 
+        @if (warnings().length) {
+          <section class="data-warnings" [class.review-required]="reviewRequested()" aria-live="polite">
+            <div class="warning-head">
+              <div>
+                <strong>⚠ พบข้อมูลที่ควรตรวจ {{ warnings().length }} รายการ</strong>
+                <p>ระบบยังไม่ตัดสินว่าข้อมูลผิด คุณสามารถตรวจแล้วบันทึกต่อได้</p>
+              </div>
+              @if (previousRows().length) { <span class="compare-badge">เทียบกับปีก่อนแล้ว</span> }
+            </div>
+            <ul>
+              @for (warning of visibleWarnings(); track warning.message) {
+                <li>{{ warning.message }}</li>
+              }
+            </ul>
+            @if (warnings().length > visibleWarnings().length) {
+              <p class="more-warning">และอีก {{ warnings().length - visibleWarnings().length }} รายการ</p>
+            }
+          </section>
+        }
+
         <div class="table-wrap">
           <table class="grid">
             <thead>
@@ -122,8 +142,8 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
                       <td class="calc" [attr.data-label]="c.label">{{ fmt(sumOf(c, r)) }}</td>
                     } @else {
                     <td [attr.data-label]="c.label">
-                      <input class="cell" [class.numcol]="c.type === 'number'" [name]="'r' + i + c.key"
-                        [(ngModel)]="r[c.key]" (ngModelChange)="dirty.set(true)" [disabled]="!t.canEdit"
+                      <input class="cell" [class.numcol]="c.type === 'number'" [class.warn-cell]="cellHasWarning(i, c.key)" [name]="'r' + i + c.key"
+                        [(ngModel)]="r[c.key]" (ngModelChange)="dataChanged()" [disabled]="!t.canEdit"
                         [attr.inputmode]="c.type === 'number' ? 'decimal' : null"
                         [attr.aria-label]="c.label + ' แถวที่ ' + (i + 1)" />
                     </td>
@@ -215,7 +235,9 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
             } @else if (res()!.updatedAt) {
               <button class="btn danger sm" (click)="confirmClear.set(true)">ล้างข้อมูล</button>
             }
-            <button class="btn primary save-btn" (click)="save()" [disabled]="busy()">{{ busy() ? 'กำลังบันทึก…' : 'บันทึกข้อมูล' }}</button>
+            <button class="btn primary save-btn" (click)="save()" [disabled]="busy()">
+              {{ busy() ? 'กำลังบันทึก…' : warnings().length && !reviewRequested() ? 'ตรวจข้อมูลก่อนบันทึก' : warnings().length ? 'ตรวจแล้ว บันทึกต่อ' : 'บันทึกข้อมูล' }}
+            </button>
           </div>
         }
       </div>
@@ -240,6 +262,8 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
     .cell { width: 100%; min-width: 110px; border: 0; padding: 9px 10px; font: inherit; background: transparent; }
     .cell.numcol { text-align: right; font-variant-numeric: tabular-nums; }
     .cell:focus { outline: 2px solid var(--blue-600); outline-offset: -2px; background: #fff; }
+    .cell.warn-cell { background: #fff7ed; box-shadow: inset 0 0 0 1px #fb923c; }
+    .cell.warn-cell:focus { outline-color: #ea580c; background: #fff; }
     .cell:disabled { color: var(--ink); }
     .grid td.calc { padding: 9px 10px; text-align: right; font-variant-numeric: tabular-nums; background: #f8fafc; color: var(--blue-900); font-weight: 600; white-space: nowrap; }
     .grid td.calc.lbl { text-align: left; }
@@ -261,6 +285,13 @@ import { formatNumber, hasTotal, rowSum, totalRow } from '../../core/table-calc'
     .alert.copied { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
     .alert.prev { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--blue-50); color: var(--blue-900); margin: 0 0 12px; }
     .alert.lockmsg { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
+    .data-warnings { margin: 0 0 12px; padding: 12px 14px; border: 1px solid #fed7aa; border-radius: var(--radius); background: #fff7ed; color: #9a3412; }
+    .data-warnings.review-required { border-color: #f97316; box-shadow: 0 0 0 3px rgb(249 115 22 / 0.12); }
+    .warning-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+    .warning-head p, .more-warning { margin: 2px 0 0; }
+    .data-warnings ul { margin: 8px 0 0; padding-left: 22px; }
+    .data-warnings li + li { margin-top: 3px; }
+    .compare-badge { padding: 3px 9px; border-radius: 999px; background: #ffedd5; font-size: 12px; white-space: nowrap; }
     .images { margin-top: 20px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); }
     .images-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
     .upload { margin-left: auto; cursor: pointer; }
@@ -337,6 +368,7 @@ export class RecordEditor {
 
   res = signal<RecordResponse | null>(null);
   rows = signal<Row[]>([]);
+  previousRows = signal<Row[]>([]);
   images = signal<ImageItem[]>([]);
   uploading = signal(0);
   text = '';
@@ -348,6 +380,7 @@ export class RecordEditor {
   showPaste = signal(false);
   confirmClear = signal(false);
   pulling = signal(false);
+  reviewRequested = signal(false);
   label = periodLabel;
 
   prevLabel = computed(() => {
@@ -367,6 +400,8 @@ export class RecordEditor {
     return totalRow(this.res()!.topic.columns, this.rows());
   }
   colNames = computed(() => (this.res()?.topic.columns ?? []).filter((c) => c.type !== 'sum').map((c) => c.label).join(', '));
+  warnings = computed(() => tableWarnings(this.res()?.topic.columns ?? [], this.rows(), this.previousRows()));
+  visibleWarnings = computed(() => this.warnings().slice(0, 10));
 
   constructor() {
     // โหลดใหม่เมื่อเปลี่ยนหัวข้อหรือปีการศึกษา
@@ -384,6 +419,8 @@ export class RecordEditor {
       this.message.set('');
     }
     this.confirmClear.set(false);
+    this.reviewRequested.set(false);
+    this.previousRows.set([]);
     this.api.record(id, year).subscribe({
       next: (r) => {
         this.text = r.data?.text ?? '';
@@ -394,6 +431,15 @@ export class RecordEditor {
         this.dirty.set(false);
         // เล่มเผยแพร่แล้ว = ดูได้อย่างเดียว
         this.res.set(r.locked ? { ...r, topic: { ...r.topic, canEdit: false } } : r);
+        if (r.previous) {
+          this.api.record(id, r.previous.academicYear).subscribe({
+            next: (old) => {
+              if (this.res()?.topic.id === id && this.res()?.academicYear === year) {
+                this.previousRows.set(old.data?.rows ?? []);
+              }
+            },
+          });
+        }
       },
       error: (e) => this.loadError.set(apiError(e)),
     });
@@ -416,6 +462,7 @@ export class RecordEditor {
     const cols = this.res()!.topic.columns;
     this.rows.update((rows) => [...rows, ...Array.from({ length: n }, () => this.blankRow(cols))]);
     this.dirty.set(true);
+    this.reviewRequested.set(false);
   }
 
   removeRow(i: number) {
@@ -424,6 +471,7 @@ export class RecordEditor {
     if (hasData && !confirm(`ลบแถวที่ ${i + 1}? ข้อมูลในแถวนี้จะถูกนำออกเมื่อกดบันทึก`)) return;
     this.rows.update((rows) => rows.filter((_, j) => j !== i));
     this.dirty.set(true);
+    this.reviewRequested.set(false);
   }
 
   /** แปลงข้อความที่คัดลอกจาก Excel (คั่นด้วย Tab) เป็นแถวของตาราง */
@@ -446,11 +494,17 @@ export class RecordEditor {
     this.rows.set([...keep, ...pasted]);
     this.showPaste.set(false);
     this.dirty.set(true);
+    this.reviewRequested.set(false);
     this.show(`วางข้อมูล ${pasted.length} แถวแล้ว ตรวจสอบแล้วกดบันทึก`, false);
   }
 
   save(clear = false) {
     const r = this.res()!;
+    if (!clear && r.topic.kind === 'table' && this.warnings().length && !this.reviewRequested()) {
+      this.reviewRequested.set(true);
+      queueMicrotask(() => document.querySelector('.data-warnings')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      return;
+    }
     this.busy.set(true);
     this.message.set('');
     const images = clear ? [] : this.images().map((x) => ({ file: x.file, caption: x.caption.trim() }));
@@ -473,6 +527,21 @@ export class RecordEditor {
           this.show(apiError(e), true);
         },
       });
+  }
+
+  dataChanged() {
+    // ngModel แก้ค่าใน object เดิม จึงสร้าง array ใหม่เพื่อให้ computed warnings คำนวณทันที
+    this.rows.update((rows) => [...rows]);
+    this.dirty.set(true);
+    this.reviewRequested.set(false);
+  }
+
+  cellHasWarning(row: number, columnKey: string): boolean {
+    return this.warnings().some((warning) => {
+      if (warning.row !== row) return false;
+      if (warning.columnKey === columnKey) return true;
+      return warning.kind === 'incomplete' && String(this.rows()[row]?.[columnKey] ?? '').trim() === '';
+    });
   }
 
   /** ดึงข้อมูลครั้งก่อนมาใส่ในฟอร์ม (ยังไม่บันทึก จนกว่าจะกด "บันทึก") */

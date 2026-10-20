@@ -41,13 +41,15 @@
       <div class="head-meta">
         <span class="badge">ปีการศึกษา {{ b.academicYear }}</span>
         <span class="badge">{{ label() }}</span>
-        @if (b.sections.length) {
-          <button class="btn ghost pdf" (click)="exportExcel()" title="ทุกตารางในเล่ม แยกแท็บละตาราง">⬇ Excel ทั้งเล่ม</button>
-          <button class="btn ghost pdf" (click)="print()" title="เลือกเครื่องพิมพ์ หรือเลือก &quot;บันทึกเป็น PDF&quot;">🖨 พิมพ์ / บันทึก PDF</button>
-        }
-        @if (b.pdfUrl) {
-          <a class="btn ghost pdf" [href]="b.pdfUrl" target="_blank" rel="noopener">ดาวน์โหลด PDF</a>
-        }
+        <div class="book-actions">
+          @if (b.sections.length) {
+            <button class="btn ghost pdf" (click)="exportExcel()" title="ทุกตารางในเล่ม แยกแท็บละตาราง">⬇ Excel ทั้งเล่ม</button>
+            <button class="btn ghost pdf" (click)="print()" title="เลือกเครื่องพิมพ์ หรือเลือก &quot;บันทึกเป็น PDF&quot;">🖨 พิมพ์ / บันทึก PDF</button>
+          }
+          @if (b.pdfUrl) {
+            <a class="btn ghost pdf" [href]="b.pdfUrl" target="_blank" rel="noopener">ดาวน์โหลด PDF</a>
+          }
+        </div>
       </div>
     </div>
   </section>
@@ -98,6 +100,12 @@
     <!-- สารบัญ -->
     <aside class="toc">
       <div class="toc-title">สารบัญ</div>
+      @if (auth.user()) {
+        <a class="raw-doc-link" routerLink="/admin/raw-documents" [queryParams]="{ year: b.academicYear }">
+          <span class="raw-doc-icon">📎</span>
+          <span><strong>ข้อมูลดิบของปีนี้</strong><small>ปีการศึกษา {{ b.academicYear }}</small></span>
+        </a>
+      }
       <nav>
         @for (s of view()!.sections; track s.id; let i = $index) {
           @if (s.group && (i === 0 || s.group !== view()!.sections[i - 1].group)) {

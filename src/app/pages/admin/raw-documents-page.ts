@@ -6,6 +6,7 @@ import { AuthService } from '../../core/auth.service';
 import { RawDocument } from '../../core/admin.model';
 import { apiError } from '../../core/api-error';
 import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'app-raw-documents-page',
@@ -78,8 +79,8 @@ import { firstValueFrom } from 'rxjs';
   `,
 })
 export class RawDocumentsPage {
-  api = inject(AdminApi); state = inject(AdminState); auth = inject(AuthService);
-  year = 0; departmentId = 0; description = ''; senderName = '';
+  api = inject(AdminApi); state = inject(AdminState); auth = inject(AuthService); route = inject(ActivatedRoute);
+  year = Number(this.route.snapshot.queryParamMap.get('year')) || 0; departmentId = 0; description = ''; senderName = '';
   files = signal<FileList | null>(null); documents = signal<RawDocument[]>([]); trash = signal(false);
   busy = signal(false); loading = signal(false); message = signal(''); isError = signal(false);
   years = computed(() => this.state.terms().map(x => x.academicYear));

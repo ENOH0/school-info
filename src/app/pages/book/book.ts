@@ -9,6 +9,7 @@ import { Chart } from '../../shared/chart/chart';
 import { SITE } from '../../site.config';
 import { downloadBook, downloadTable } from '../../core/book-export';
 import { TableBlock } from '../../core/book.model';
+import { AuthService } from '../../core/auth.service';
 @Component({
   selector: 'app-book',
   imports: [RouterLink, Hl, Chart],
@@ -24,6 +25,7 @@ export class BookPage {
   private service = inject(BookService);
   private host = inject<ElementRef<HTMLElement>>(ElementRef);
   private searchBox = viewChild<ElementRef<HTMLInputElement>>('searchBox');
+  auth = inject(AuthService);
 
   book = signal<Book | null>(null);
   error = signal(false);

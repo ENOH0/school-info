@@ -45,8 +45,15 @@ h1 {
   }
 }
 
-.pdf {
+.book-actions {
   margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pdf {
   padding: 6px 16px;
 }
 
@@ -189,6 +196,42 @@ h1 {
   color: var(--ink-2);
   letter-spacing: 0.05em;
   margin-bottom: 8px;
+}
+
+.raw-doc-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--blue-100);
+  border-radius: 10px;
+  background: var(--blue-50);
+  color: var(--blue-800);
+  text-decoration: none;
+  line-height: 1.25;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
+
+  &:hover {
+    border-color: var(--blue-600);
+    background: var(--blue-100);
+    transform: translateY(-1px);
+  }
+
+  .raw-doc-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+
+  strong,
+  small {
+    display: block;
+  }
+
+  small {
+    margin-top: 2px;
+    color: var(--ink-2);
+  }
 }
 
 .toc-group {
@@ -374,6 +417,10 @@ caption {
     }
   }
 
+  .raw-doc-link {
+    margin-bottom: 10px;
+  }
+
   .toc-group {
     display: none;
   }
@@ -387,6 +434,11 @@ caption {
   }
 
   .pdf {
+    margin-left: 0;
+  }
+
+  .book-actions {
+    width: 100%;
     margin-left: 0;
   }
 }
