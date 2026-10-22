@@ -72,7 +72,7 @@ import { ActivatedRoute } from '@angular/router';
     .head { justify-content:space-between; align-items:flex-end; margin-bottom:16px; } .head p { margin:0; }
     .filters { align-items:flex-end; } .upload { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; align-items:end; margin-bottom:18px; }
     .wide { grid-column:span 2; } .small,.meta { font-size:13px; } .toolbar { justify-content:space-between; margin:18px 0 10px; }
-    .list { display:flex; flex-direction:column; gap:10px; } .doc { padding:14px; } .file-icon { font-weight:800; color:var(--blue-700); background:var(--blue-50); padding:9px; border-radius:8px; }
+    .list { display:flex; flex-direction:column; gap:10px; } .doc { padding:15px; border-left:3px solid #c7d6e6; } .file-icon { min-width:48px; text-align:center; font-weight:800; color:var(--blue-800); background:var(--blue-50); border:1px solid var(--blue-100); padding:9px; border-radius:7px; }
     .info { flex:1; min-width:220px; } .name { font-weight:700; word-break:break-word; } .info p { margin:5px 0; white-space:pre-wrap; } .meta { color:var(--ink-2); }
     .deleted { color:#b45309; font-size:13px; margin-top:4px; } .empty { padding:28px; text-align:center; border:1px dashed var(--line); border-radius:var(--radius); color:var(--ink-2); }
     @media(max-width:640px){ .wide{grid-column:auto}.actions{width:100%}.actions .btn{flex:1}.filters{width:100%}.filters .field{flex:1} }

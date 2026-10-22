@@ -158,7 +158,7 @@ import { apiError } from '../../core/api-error';
     .head p { margin: 0; }
     .summary { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; padding: 14px 18px; background: var(--bg-soft); border-radius: var(--radius); margin-bottom: 16px; }
     .progress { width: 220px; height: 6px; border-radius: 999px; background: var(--blue-100); margin: 6px 0 2px; overflow: hidden; }
-    .progress-bar { height: 100%; background: var(--sky-500); transition: width 0.3s; }
+    .progress-bar { height: 100%; background: linear-gradient(90deg, var(--blue-700), var(--sky-500)); transition: width 0.3s; }
     .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
     .item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; }
     .item:hover { border-color: var(--blue-100); box-shadow: var(--shadow-sm); }
@@ -176,7 +176,7 @@ import { apiError } from '../../core/api-error';
     .title:hover { color: var(--blue-700); }
     .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 4px; }
     .meta .muted { font-size: 13px; }
-    .badge.chap { background: var(--blue-700); color: #fff; }
+    .badge.chap { background: var(--blue-900); border-color: var(--blue-900); color: #fff; }
     .alert.lock { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
     .lockbadge { font-size: 12px; font-weight: 600; color: #92400e; background: #fffbeb; border-radius: 999px; padding: 2px 8px; }
     .actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }

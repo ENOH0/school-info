@@ -105,9 +105,9 @@ import { apiError } from '../../core/api-error';
     .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
     .head p { margin: 0; }
     .total { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
-    .ring { --p: 0; width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; flex: none;
-      background: conic-gradient(var(--sky-500) calc(var(--p) * 1%), var(--blue-100) 0); }
-    .ring span { width: 64px; height: 64px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-weight: 700; color: var(--blue-900); }
+    .ring { --p: 0; width: 88px; height: 88px; border-radius: 50%; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 0 1px rgb(18 52 90 / .05);
+      background: conic-gradient(var(--blue-700) calc(var(--p) * 1%), var(--blue-100) 0); }
+    .ring span { width: 66px; height: 66px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-weight: 700; color: var(--blue-900); box-shadow: 0 1px 5px rgb(18 52 90 / .08); }
     .total-title { font-size: 18px; font-weight: 700; color: var(--blue-900); }
     .badge.pub { background: #fffbeb; color: #92400e; margin-top: 6px; }
     .badge.ready { background: #ecfdf5; color: #065f46; margin-top: 6px; }
@@ -118,7 +118,7 @@ import { apiError } from '../../core/api-error';
     .dept-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
     .count { font-size: 20px; font-weight: 700; color: var(--blue-800); font-variant-numeric: tabular-nums; }
     .bar { height: 8px; border-radius: 999px; background: var(--blue-100); overflow: hidden; }
-    .bar-fill { height: 100%; background: var(--sky-500); transition: width 0.4s; }
+    .bar-fill { height: 100%; background: linear-gradient(90deg, var(--blue-700), var(--sky-500)); transition: width 0.4s; }
     .dept.done .bar-fill { background: #10b981; }
     .small { font-size: 13px; }
     details { font-size: 14px; }

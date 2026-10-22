@@ -46,17 +46,26 @@ import { apiError } from '../../core/api-error';
     </div>
   `,
   styles: `
-    .bar { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
-    .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 8px; padding-bottom: 8px; }
-    .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
-    .tabs a { padding: 8px 14px; border-radius: 999px; text-decoration: none; font-weight: 600; font-size: 15px; color: var(--ink-2); }
-    .tabs a:hover { background: #fff; color: var(--blue-700); }
-    .tabs a.on { background: var(--blue-700); color: #fff; }
+    .bar { position: relative; background: #fff; border-bottom: 1px solid #ccd7e3; box-shadow: 0 3px 12px rgb(18 52 90 / .045); }
+    .bar::after { content: ''; position: absolute; left: 0; bottom: -1px; width: 90px; height: 2px; background: var(--gold-500); }
+    .bar-inner { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding-top: 9px; padding-bottom: 9px; }
+    .tabs { display: flex; gap: 3px; flex-wrap: wrap; }
+    .tabs a { position: relative; padding: 8px 13px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px; color: var(--ink-2); }
+    .tabs a:hover { background: var(--blue-50); color: var(--blue-900); }
+    .tabs a.on { background: var(--blue-900); color: #fff; box-shadow: 0 2px 6px rgb(18 52 90 / .16); }
     .me { display: flex; align-items: center; gap: 12px; }
-    .me .acct { display: flex; flex-direction: column; line-height: 1.3; text-align: right; font-size: 14px; color: var(--ink); text-decoration: none; padding: 4px 10px; border-radius: 8px; }
-    .me .acct:hover { background: #fff; color: var(--blue-700); }
+    .me .acct { display: flex; flex-direction: column; line-height: 1.3; text-align: right; font-size: 14px; color: var(--ink); text-decoration: none; padding: 4px 10px; border-right: 2px solid var(--gold-500); border-radius: 4px 0 0 4px; }
+    .me .acct:hover { background: var(--blue-50); color: var(--blue-900); }
     .me small { color: var(--ink-2); }
-    .page { padding-top: 24px; padding-bottom: 64px; }
+    .page { padding-top: 30px; padding-bottom: 72px; }
+    @media (max-width: 760px) {
+      .bar-inner { align-items: stretch; }
+      .tabs { width: 100%; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 3px; }
+      .tabs a { white-space: nowrap; }
+      .me { width: 100%; justify-content: space-between; border-top: 1px solid var(--line); padding-top: 8px; }
+      .me .acct { text-align: left; border-right: 0; border-left: 2px solid var(--gold-500); border-radius: 0 4px 4px 0; }
+      .page { padding-top: 22px; }
+    }
   `,
 })
 export class AdminLayout {

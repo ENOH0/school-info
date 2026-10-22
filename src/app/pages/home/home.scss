@@ -1,14 +1,31 @@
 // ===== ส่วนหัวสีน้ำเงิน =====
 .hero {
+  position: relative;
+  overflow: hidden;
   color: #fff;
   background:
-    radial-gradient(circle at 90% 0%, rgb(56 189 248 / 0.45), transparent 40%),
-    radial-gradient(circle at 0% 100%, rgb(14 165 233 / 0.3), transparent 35%),
-    linear-gradient(135deg, var(--blue-700), var(--blue-900));
-  padding: 56px 0 72px;
+    linear-gradient(115deg, transparent 66%, rgb(255 255 255 / 0.045) 66%),
+    radial-gradient(circle at 88% 8%, rgb(90 166 214 / 0.22), transparent 34%),
+    linear-gradient(135deg, #174c82, #102f50 78%);
+  padding: 64px 0 86px;
+  border-bottom: 4px solid var(--gold-500);
+}
+
+.hero::after {
+  content: '';
+  position: absolute;
+  right: 7%;
+  bottom: -80px;
+  width: 250px;
+  height: 250px;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  border-radius: 50%;
+  box-shadow: 0 0 0 30px rgb(255 255 255 / 0.025), 0 0 0 60px rgb(255 255 255 / 0.018);
 }
 
 .hero-inner {
+  position: relative;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   align-items: flex-end;
@@ -17,18 +34,32 @@
 }
 
 .eyebrow {
-  margin: 0 0 8px;
-  font-weight: 600;
-  color: var(--sky-100);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 10px;
+  font-weight: 700;
+  color: #f3dfb1;
+  letter-spacing: .05em;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 30px;
+  height: 2px;
+  background: #d7aa50;
 }
 
 h1 {
-  font-size: clamp(28px, 5vw, 44px);
+  color: #fff;
+  font-size: clamp(32px, 5vw, 48px);
   font-weight: 700;
+  line-height: 1.22;
+  text-shadow: 0 2px 8px rgb(0 0 0 / 0.15);
 }
 
 .lead {
-  max-width: 560px;
+  max-width: 620px;
   margin: 0;
   color: rgb(255 255 255 / 0.85);
 }
@@ -40,11 +71,12 @@ h1 {
 
 .stat {
   min-width: 140px;
-  padding: 14px 18px;
-  border-radius: var(--radius);
-  background: rgb(255 255 255 / 0.12);
-  border: 1px solid rgb(255 255 255 / 0.2);
-  backdrop-filter: blur(4px);
+  padding: 16px 19px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  border-top: 2px solid #d7aa50;
+  backdrop-filter: blur(8px);
 }
 
 .stat-num {
@@ -61,8 +93,8 @@ h1 {
 // ===== ชั้นวางเล่ม =====
 .shelf {
   position: relative;
-  margin-top: -32px; // ดึงขึ้นไปทับส่วนหัวนิดหนึ่ง
-  padding-bottom: 64px;
+  margin-top: -34px;
+  padding-bottom: 72px;
 }
 
 .shelf-head {
@@ -71,15 +103,18 @@ h1 {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-  padding: 18px 22px;
+  padding: 19px 22px;
   background: #fff;
   border-radius: var(--radius);
+  border: 1px solid var(--line);
+  border-top: 3px solid var(--gold-500);
   box-shadow: var(--shadow-md);
   margin-bottom: 32px;
 
   h2 {
     margin: 0;
-    font-size: 20px;
+    color: var(--blue-900);
+    font-size: 23px;
   }
 }
 
@@ -94,7 +129,7 @@ h1 {
   font-size: 14px;
   font-weight: 600;
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 6px;
   border: 1px solid var(--line);
   background: #fff;
   color: var(--ink-2);
@@ -107,7 +142,7 @@ h1 {
   }
 
   &.on {
-    background: var(--blue-700);
+    background: var(--blue-900);
     border-color: var(--blue-700);
     color: #fff;
   }
@@ -116,7 +151,7 @@ h1 {
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(170px, 220px));
-  gap: 32px 24px;
+  gap: 36px 26px;
   justify-content: start;
   animation: rise 0.4s ease both;
 }
@@ -132,7 +167,10 @@ h1 {
 .empty {
   color: var(--ink-2);
   text-align: center;
-  padding: 40px 0;
+  padding: 48px 20px;
+  border: 1px dashed #bdcada;
+  border-radius: var(--radius);
+  background: rgb(255 255 255 / 0.7);
 }
 
 @keyframes rise {
@@ -150,7 +188,7 @@ h1 {
 
 @media (max-width: 600px) {
   .hero {
-    padding: 36px 0 60px;
+    padding: 42px 0 68px;
   }
   .stats {
     width: 100%;

@@ -73,7 +73,7 @@ import { AdminState } from '../../core/admin-state.service';
     .card { display: grid; grid-template-columns: 48px 1fr; gap: 14px; align-items: start; }
     .card h2 { margin: 0 0 6px; font-size: 19px; color: var(--blue-900); }
     .card p { margin: 0 0 14px; }
-    .icon { width: 48px; height: 48px; display: grid; place-items: center; border-radius: 14px; background: var(--blue-50); color: var(--blue-700); font-size: 24px; }
+    .icon { width: 48px; height: 48px; display: grid; place-items: center; border: 1px solid var(--blue-100); border-radius: 8px; background: var(--blue-50); color: var(--blue-800); font-size: 24px; }
     .note { margin: 10px 0 0 !important; color: var(--ink-2); font-size: 13px; }
     .danger-zone { border-color: #fecaca; }
     .danger-zone .icon { background: #fef2f2; color: #b91c1c; }

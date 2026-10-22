@@ -208,7 +208,7 @@ const PRESETS: { name: string; cols: PresetCol[] }[] = [
     .cols { display: flex; flex-direction: column; gap: 8px; padding: 14px; background: var(--bg-soft); border-radius: var(--radius); }
     .cols-head { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
     .presets { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; font-size: 13px; color: var(--ink-2); }
-    .chip { font: inherit; font-size: 13px; padding: 3px 10px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+    .chip { font: inherit; font-size: 13px; padding: 3px 10px; border-radius: 5px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
     .chip:hover { border-color: var(--blue-600); color: var(--blue-700); }
     .col-box { display: flex; flex-direction: column; gap: 4px; }
     .col-row { display: flex; gap: 6px; align-items: center; }

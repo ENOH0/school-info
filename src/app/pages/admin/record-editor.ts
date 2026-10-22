@@ -103,19 +103,26 @@ import { formatNumber, hasTotal, rowSum, tableWarnings, totalRow } from '../../c
         @if (warnings().length) {
           <section class="data-warnings" [class.review-required]="reviewRequested()" aria-live="polite">
             <div class="warning-head">
-              <div>
-                <strong>⚠ พบข้อมูลที่ควรตรวจ {{ warnings().length }} รายการ</strong>
-                <p>ระบบยังไม่ตัดสินว่าข้อมูลผิด คุณสามารถตรวจแล้วบันทึกต่อได้</p>
+              <div class="warning-title">
+                <span class="warning-mark" aria-hidden="true">!</span>
+                <div>
+                  <span class="warning-eyebrow">การตรวจสอบความถูกต้องของข้อมูล</span>
+                  <strong>พบข้อมูลที่ควรตรวจสอบ {{ warnings().length }} รายการ</strong>
+                  <p>โปรดตรวจสอบรายการด้านล่างก่อนบันทึก ข้อความนี้เป็นคำแนะนำและไม่ปิดกั้นการบันทึกข้อมูล</p>
+                </div>
               </div>
-              @if (previousRows().length) { <span class="compare-badge">เทียบกับปีก่อนแล้ว</span> }
+              @if (previousRows().length) { <span class="compare-badge"><span aria-hidden="true">✓</span> เทียบกับปีก่อนแล้ว</span> }
             </div>
-            <ul>
-              @for (warning of visibleWarnings(); track warning.message) {
-                <li>{{ warning.message }}</li>
+            <ol class="warning-list">
+              @for (warning of visibleWarnings(); track warning.message; let i = $index) {
+                <li><span class="warning-no">{{ i + 1 }}</span><span>{{ warning.message }}</span></li>
               }
-            </ul>
+            </ol>
             @if (warnings().length > visibleWarnings().length) {
               <p class="more-warning">และอีก {{ warnings().length - visibleWarnings().length }} รายการ</p>
+            }
+            @if (reviewRequested()) {
+              <p class="review-note"><strong>ตรวจสอบแล้วหรือไม่?</strong> หากข้อมูลถูกต้องตามเอกสารต้นฉบับ สามารถกด “ตรวจแล้ว บันทึกต่อ” ได้</p>
             }
           </section>
         }
@@ -285,13 +292,21 @@ import { formatNumber, hasTotal, rowSum, tableWarnings, totalRow } from '../../c
     .alert.copied { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
     .alert.prev { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--blue-50); color: var(--blue-900); margin: 0 0 12px; }
     .alert.lockmsg { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; margin: 0 0 12px; }
-    .data-warnings { margin: 0 0 12px; padding: 12px 14px; border: 1px solid #fed7aa; border-radius: var(--radius); background: #fff7ed; color: #9a3412; }
-    .data-warnings.review-required { border-color: #f97316; box-shadow: 0 0 0 3px rgb(249 115 22 / 0.12); }
-    .warning-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
-    .warning-head p, .more-warning { margin: 2px 0 0; }
-    .data-warnings ul { margin: 8px 0 0; padding-left: 22px; }
-    .data-warnings li + li { margin-top: 3px; }
-    .compare-badge { padding: 3px 9px; border-radius: 999px; background: #ffedd5; font-size: 12px; white-space: nowrap; }
+    .data-warnings { position: relative; overflow: hidden; margin: 0 0 16px; padding: 18px; border: 1px solid #d9e2ef; border-radius: 14px; background: #fff; color: var(--ink); box-shadow: 0 8px 24px rgb(15 23 42 / 0.05); }
+    .data-warnings::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 5px; background: #d49418; }
+    .data-warnings.review-required { border-color: #d49418; box-shadow: 0 0 0 3px rgb(212 148 24 / 0.12), 0 10px 28px rgb(15 23 42 / 0.07); }
+    .warning-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; padding-left: 2px; }
+    .warning-title { display: flex; align-items: flex-start; gap: 12px; flex: 1 1 520px; }
+    .warning-title strong { display: block; color: #173b72; font-size: 18px; line-height: 1.35; }
+    .warning-title p { margin: 4px 0 0; color: var(--ink-2); line-height: 1.55; }
+    .warning-mark { display: grid; place-items: center; flex: 0 0 36px; width: 36px; height: 36px; border: 1px solid #e9bd60; border-radius: 50%; background: #fff8e7; color: #a96900; font-size: 22px; font-weight: 700; font-family: Arial, sans-serif; }
+    .warning-eyebrow { display: block; margin-bottom: 2px; color: #8a5a00; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
+    .warning-list { display: grid; gap: 7px; margin: 14px 0 0 48px; padding: 0; list-style: none; }
+    .warning-list li { display: flex; align-items: flex-start; gap: 10px; padding: 9px 12px; border: 1px solid #e6ebf2; border-radius: 9px; background: #f8fafc; color: #334155; line-height: 1.45; }
+    .warning-no { display: grid; place-items: center; flex: 0 0 22px; width: 22px; height: 22px; border-radius: 50%; background: #e8eef7; color: #244b82; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .more-warning { margin: 8px 0 0 48px; color: var(--ink-2); font-size: 13px; }
+    .compare-badge { display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border: 1px solid #cbd8e8; border-radius: 999px; background: #f5f8fc; color: #315985; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .review-note { margin: 14px 0 0 48px; padding: 10px 12px; border-left: 3px solid #d49418; background: #fff9ec; color: #76500b; line-height: 1.5; }
     .images { margin-top: 20px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); }
     .images-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
     .upload { margin-left: auto; cursor: pointer; }
@@ -311,6 +326,11 @@ import { formatNumber, hasTotal, rowSum, tableWarnings, totalRow } from '../../c
       .toolbar-copy, .toolbar-actions { width: 100%; }
       .toolbar-actions .btn { flex: 1 1 140px; }
       .paste-actions .btn { flex: 1 1 100%; }
+      .data-warnings { padding: 14px 12px 14px 16px; }
+      .warning-title { gap: 9px; }
+      .warning-mark { flex-basis: 32px; width: 32px; height: 32px; font-size: 19px; }
+      .warning-title strong { font-size: 16px; }
+      .warning-list, .more-warning, .review-note { margin-left: 0; }
 
       // มือถือ: เปลี่ยนแต่ละแถวเป็นการ์ด มีชื่อคอลัมน์กำกับทุกช่อง
       .table-wrap { overflow: visible; border: 0; background: transparent; }

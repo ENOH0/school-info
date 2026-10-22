@@ -49,8 +49,10 @@ import { apiError } from '../../core/api-error';
     </div>
   `,
   styles: `
-    .wrap { min-height: calc(100vh - 160px); display: grid; place-items: center; padding: 32px 16px; background: var(--bg-soft); }
-    .box { width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-md); }
+    .wrap { position: relative; min-height: calc(100vh - 176px); display: grid; place-items: center; overflow: hidden; padding: 44px 16px; background: linear-gradient(135deg, #edf3f9, #f8fafc 62%); }
+    .wrap::before { content: ''; position: absolute; width: 420px; height: 420px; right: -170px; top: -190px; border: 1px solid rgb(18 52 90 / .07); border-radius: 50%; box-shadow: 0 0 0 42px rgb(18 52 90 / .025), 0 0 0 84px rgb(18 52 90 / .018); }
+    .box { position: relative; width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 15px; padding: 28px; border-top: 4px solid var(--blue-900); box-shadow: var(--shadow-md); }
+    .box::after { content: ''; position: absolute; top: -4px; right: 0; width: 82px; height: 4px; background: var(--gold-500); border-radius: 0 var(--radius) 0 0; }
     .box .btn { justify-content: center; margin-top: 4px; }
     .hint { margin: -6px 0 0; font-size: 13px; }
     p { margin: 0; }
