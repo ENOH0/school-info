@@ -2,6 +2,9 @@
 chcp 65001 >nul
 setlocal
 
+set "AUTOMATED=0"
+if /i "%~1"=="--automated" set "AUTOMATED=1"
+
 rem ================================================================
 rem  สร้างชุดไฟล์สำหรับขึ้นเซิร์ฟเวอร์โรงเรียน
 rem  ผลลัพธ์: deploy\school-info  = อัปโหลดทั้งโฟลเดอร์นี้ขึ้นเซิร์ฟเวอร์
@@ -26,8 +29,11 @@ echo   4. Check that APP in deploy.bat matches the website URL.
 echo.
 type "server\SERVER-CHECKLIST.txt"
 echo.
+if "%AUTOMATED%"=="1" goto checked
 choice /c YN /n /m "Have you checked the server folders? Y = build, N = stop: "
 if errorlevel 2 goto cancelled
+
+:checked
 
 if "%APP%"=="/" (
     set "BASE=/"
@@ -66,6 +72,9 @@ copy /y "server\database\historical-2566-2568.sql" "deploy\database\" >nul || go
 copy /y "server\database\five-aspects-content-2566-2568.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\cleanup-duplicate-topics.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\annual-raw-documents.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\school-info-data-sync-2566-2569.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\chapter1-information-topics-2569.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\chapter1-backfill-2566-2568.sql" "deploy\database\" >nul || goto fail
 copy /y "server\DEPLOY.md" "deploy\DEPLOY.md" >nul
 copy /y "server\SERVER-CHECKLIST.txt" "deploy\SERVER-CHECKLIST.txt" >nul
 
@@ -75,18 +84,20 @@ echo  Upload %OUT% to the server, including hidden .htaccess files.
 echo  Instructions: deploy\DEPLOY.md
 echo  Server checklist: deploy\SERVER-CHECKLIST.txt
 echo.
-explorer deploy
-pause
+if "%AUTOMATED%"=="0" (
+    explorer deploy
+    pause
+)
 exit /b 0
 
 :cancelled
 echo.
 echo Build cancelled. Check the website and backup folders with the server administrator first.
-pause
+if "%AUTOMATED%"=="0" pause
 exit /b 0
 
 :fail
 echo.
 echo !!!!! BUILD FAILED - SEE THE ERROR ABOVE !!!!!
-pause
+if "%AUTOMATED%"=="0" pause
 exit /b 1

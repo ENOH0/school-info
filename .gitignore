@@ -52,3 +52,4 @@ Thumbs.db
 
 # ชุดไฟล์ขึ้นเซิร์ฟเวอร์ (สร้างใหม่ทุกครั้งด้วย deploy.bat)
 /deploy
+/deploy-logs

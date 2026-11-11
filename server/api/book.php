@@ -26,10 +26,12 @@ if (!$published && !current_user()) {
 $stmt = db()->prepare(
     'SELECT tp.id, tp.chapter, tp.title, tp.kind, tp.frequency, tp.columns_json, tp.chart_json, d.name AS department,
             r.data_json, r.academic_year, r.term AS record_term
-       FROM records r
-       JOIN topics tp ON tp.id = r.topic_id
+       FROM topics tp
        JOIN departments d ON d.id = tp.department_id
-      WHERE r.academic_year = ? AND r.term = 0
+       LEFT JOIN records r
+         ON r.topic_id = tp.id
+        AND r.academic_year = ?
+        AND r.term = 0
       ORDER BY (tp.chapter = 0), tp.chapter, d.sort_order, d.id, tp.sort_order, tp.id'
 );
 $stmt->execute([$year]);
