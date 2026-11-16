@@ -75,6 +75,9 @@ copy /y "server\database\annual-raw-documents.sql" "deploy\database\" >nul || go
 copy /y "server\database\school-info-data-sync-2566-2569.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\chapter1-information-topics-2569.sql" "deploy\database\" >nul || goto fail
 copy /y "server\database\chapter1-backfill-2566-2568.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\add-five-information-topics.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\fill-empty-topics-five-books.sql" "deploy\database\" >nul || goto fail
+copy /y "server\database\fill-legacy-topic-gaps-five-books.sql" "deploy\database\" >nul || goto fail
 copy /y "server\DEPLOY.md" "deploy\DEPLOY.md" >nul
 copy /y "server\SERVER-CHECKLIST.txt" "deploy\SERVER-CHECKLIST.txt" >nul
 

@@ -108,11 +108,26 @@ import { apiError } from '../../core/api-error';
         <p class="alert err">{{ error() }}</p>
       }
 
+      <div class="searchbox">
+        <span class="search-icon" aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          [value]="search()"
+          (input)="search.set($any($event.target).value)"
+          placeholder="ค้นหาชื่อหัวข้อ หมวด หรือประเภทข้อมูล…"
+          aria-label="ค้นหาหัวข้อ"
+        >
+        @if (search()) {
+          <span class="search-count">พบ {{ filteredTopics().length }} หัวข้อ</span>
+          <button class="clear-search" type="button" (click)="search.set('')" aria-label="ล้างคำค้นหา">×</button>
+        }
+      </div>
+
       @if (loading()) {
         <p class="muted">กำลังโหลด…</p>
       } @else {
         <ul class="list">
-          @for (t of topics(); track t.id; let first = $first; let last = $last) {
+          @for (t of filteredTopics(); track t.id; let first = $first; let last = $last) {
             <li class="item">
               <span class="dot" [class.done]="t.hasData && !t.copiedFrom" [class.copied]="!!t.copiedFrom" aria-hidden="true">{{ t.copiedFrom ? '!' : t.hasData ? '✓' : '' }}</span>
               <div class="info">
@@ -145,8 +160,13 @@ import { apiError } from '../../core/api-error';
             </li>
           } @empty {
             <li class="empty">
-              ฝ่ายนี้ยังไม่มีหัวข้อ
-              @if (canEdit()) { กด "+ เพิ่มหัวข้อ" เพื่อเริ่ม เช่น "จำนวนนักเรียนแยกตามระดับชั้น" }
+              @if (search()) {
+                ไม่พบหัวข้อที่ตรงกับ “{{ search() }}”
+                <button class="text-button" type="button" (click)="search.set('')">ล้างคำค้นหา</button>
+              } @else {
+                ฝ่ายนี้ยังไม่มีหัวข้อ
+                @if (canEdit()) { กด "+ เพิ่มหัวข้อ" เพื่อเริ่ม เช่น "จำนวนนักเรียนแยกตามระดับชั้น" }
+              }
             </li>
           }
         </ul>
@@ -171,6 +191,16 @@ import { apiError } from '../../core/api-error';
     .small { font-size: 13px; }
     .alert.ok { background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
     .alert.warn { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+    .searchbox { min-height: 48px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; padding: 0 14px; border: 1px solid var(--line); border-radius: var(--radius); background: #fff; transition: border-color .2s, box-shadow .2s; }
+    .searchbox:focus-within { border-color: var(--blue-700); box-shadow: 0 0 0 3px var(--blue-100); }
+    .search-icon { flex: none; color: var(--ink-2); font-size: 24px; line-height: 1; transform: rotate(-20deg); }
+    .searchbox input { flex: 1; min-width: 80px; height: 46px; border: 0; outline: 0; background: transparent; color: var(--ink); font: inherit; }
+    .searchbox input::placeholder { color: var(--ink-2); }
+    .searchbox input::-webkit-search-cancel-button { display: none; }
+    .search-count { flex: none; color: var(--ink-2); font-size: 13px; }
+    .clear-search { flex: none; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: var(--bg-soft); color: var(--ink-2); cursor: pointer; font-size: 20px; line-height: 1; }
+    .clear-search:hover { background: var(--blue-100); color: var(--blue-700); }
+    .text-button { margin-left: 6px; padding: 0; border: 0; background: none; color: var(--blue-700); font: inherit; font-weight: 600; cursor: pointer; }
     .info { flex: 1; min-width: 0; }
     .title { font-weight: 600; color: var(--ink); text-decoration: none; }
     .title:hover { color: var(--blue-700); }
@@ -198,10 +228,25 @@ export class TopicsPage {
   error = signal('');
   notice = signal('');
   confirmCopy = signal(false);
+  search = signal('');
 
   filled = computed(() => this.topics().filter((t) => t.hasData).length);
   emptyCount = computed(() => this.topics().filter((t) => !t.hasData && !t.locked).length);
   uncheckedCount = computed(() => this.topics().filter((t) => t.copiedFrom).length);
+  filteredTopics = computed(() => {
+    const query = this.search().trim().toLowerCase();
+    if (!query) return this.topics();
+
+    return this.topics().filter((topic) => {
+      const searchable = [
+        topic.title,
+        this.chapterName(topic.chapter),
+        topic.kind === 'table' ? 'ตาราง' : 'ความเรียง',
+        topic.hasData ? 'กรอกแล้ว มีข้อมูล' : 'ยังไม่กรอก ไม่มีข้อมูล',
+      ].join(' ').toLowerCase();
+      return searchable.includes(query);
+    });
+  });
   canEdit = computed(() => {
     const u = this.auth.user();
     return !!u && (u.role === 'admin' || u.departmentId === this.state.deptId());
