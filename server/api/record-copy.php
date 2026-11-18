@@ -74,6 +74,7 @@ foreach ($topics as $t) {
     }
     $data['copiedFrom'] = period_text($prev['academic_year'], $prev['term']);
     $ins->execute([(int) $t['id'], $year, $target, json_encode($data, JSON_UNESCAPED_UNICODE), (int) $me['id'], now_str()]);
+    audit_log($me, 'create', 'record', (int)db()->lastInsertId(), $deptId, $t['id'], $year, $t['title'], null, $data);
     $copied[] = $t['title'];
 }
 db()->commit();

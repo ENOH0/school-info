@@ -10,8 +10,8 @@ import { apiError } from '../../core/api-error';
   selector: 'app-terms-page',
   imports: [FormsModule],
   template: `
-    <h1 class="page-title">ปีการศึกษา</h1>
-    <p class="muted">เพิ่มปีการศึกษาใหม่ก่อนเปิดให้ฝ่ายต่าง ๆ กรอกข้อมูล ปี "ปัจจุบัน" จะถูกเลือกไว้ให้อัตโนมัติ</p>
+    <h1 class="page-title">เล่มปีการศึกษา</h1>
+    <p class="muted">เพิ่มเล่มปีการศึกษาใหม่ก่อนเปิดให้ฝ่ายต่าง ๆ กรอกข้อมูล ปี "ปัจจุบัน" จะถูกเลือกไว้ให้อัตโนมัติ</p>
     <p class="muted">
       <strong>เผยแพร่</strong> = เล่มขึ้นหน้าสาธารณะให้คนนอกเห็น และ<strong>ล็อก</strong> ฝ่ายต่าง ๆ แก้ข้อมูลของปีนั้นไม่ได้
       ถ้าต้องแก้ ให้กด "ยกเลิกเผยแพร่" ก่อน
@@ -21,7 +21,7 @@ import { apiError } from '../../core/api-error';
       <label class="field">ปีการศึกษา
         <input class="input" type="number" name="year" [(ngModel)]="year" min="2500" max="2700" />
       </label>
-      <button class="btn primary" type="submit" [disabled]="busy()">+ เพิ่มปีการศึกษา</button>
+      <button class="btn primary" type="submit" [disabled]="busy()">+ เพิ่มเล่มปีการศึกษา</button>
     </form>
 
     @if (message()) {
@@ -92,7 +92,7 @@ export class TermsPage {
 
   year = new Date().getFullYear() + 543;
   add() {
-    this.run(this.api.addTerm(Number(this.year)), `เพิ่มปีการศึกษา ${this.year} แล้ว`);
+    this.run(this.api.addTerm(Number(this.year)), `เล่มเพิ่มปีการศึกษา ${this.year} แล้ว`);
   }
 
   confirmId = signal(0);

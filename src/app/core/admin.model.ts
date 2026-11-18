@@ -134,6 +134,8 @@ export interface DeptProgress {
   lastUpdatedBy: string | null;
   missing: { id: number; title: string; chapter: string; frequency: Frequency }[];
   unchecked: { id: number; title: string; chapter: string; copiedFrom: string }[];
+  incomplete: { id: number; title: string; chapter: string; reason: string }[];
+  stale: { id: number; title: string; chapter: string; updatedAt: string; updatedBy: string | null }[];
 }
 
 export interface ProgressResponse {
@@ -163,4 +165,18 @@ export interface RawDocument {
   deletedAt: string | null;
   canEdit: boolean;
   openMode: 'inline' | 'download';
+}
+
+export interface AuditLog {
+  id: number;
+  userName: string;
+  departmentName: string | null;
+  topicTitle: string | null;
+  academicYear: number | null;
+  action: 'create' | 'update' | 'delete' | 'restore';
+  entityType: 'record' | 'raw_document';
+  itemLabel: string;
+  before: unknown;
+  after: unknown;
+  createdAt: string;
 }

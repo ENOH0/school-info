@@ -245,6 +245,26 @@ function now_str()
     return date('Y-m-d H:i:s');
 }
 
+/** บันทึกประวัติการเปลี่ยนข้อมูล โดยเก็บ snapshot ก่อนและหลัง */
+function audit_log($user, $action, $entityType, $entityId, $departmentId, $topicId, $year, $label, $before, $after)
+{
+    $encode = function ($value) {
+        if ($value === null) return null;
+        return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    };
+    db()->prepare(
+        'INSERT INTO audit_logs(user_id,department_id,topic_id,academic_year,action,entity_type,entity_id,item_label,before_json,after_json,created_at)
+         VALUES(?,?,?,?,?,?,?,?,?,?,?)'
+    )->execute([
+        isset($user['id']) ? (int)$user['id'] : null,
+        $departmentId === null ? null : (int)$departmentId,
+        $topicId === null ? null : (int)$topicId,
+        $year === null ? null : (int)$year,
+        $action, $entityType, $entityId === null ? null : (int)$entityId,
+        (string)$label, $encode($before), $encode($after), now_str(),
+    ]);
+}
+
 /** ความยาวข้อความภาษาไทยแบบนับตัวอักษร */
 function text_len($s)
 {

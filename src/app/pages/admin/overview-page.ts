@@ -4,6 +4,7 @@ import { AdminApi } from '../../core/admin-api.service';
 import { AdminState } from '../../core/admin-state.service';
 import { DeptProgress, ProgressResponse, periodLabel } from '../../core/admin.model';
 import { apiError } from '../../core/api-error';
+import { downloadXlsx } from '../../core/xlsx';
 
 // ภาพรวมความคืบหน้า: ปีนี้แต่ละฝ่ายกรอกไปกี่หัวข้อ (เฉพาะผู้ดูแลระบบ)
 @Component({
@@ -15,15 +16,24 @@ import { apiError } from '../../core/api-error';
         <h1 class="page-title">ภาพรวมการกรอกข้อมูล</h1>
         <p class="muted">ดูว่าแต่ละฝ่ายกรอกข้อมูลของปีนี้ไปแล้วกี่หัวข้อ จะได้รู้ว่าต้องตามฝ่ายไหน</p>
       </div>
-      <label class="field">ปีการศึกษา
-        <select class="select" (change)="state.termId.set(+$any($event.target).value)">
+      <div class="filters">
+        <label class="field">ปีการศึกษา
+          <select class="select" (change)="state.termId.set(+$any($event.target).value)">
           @for (t of state.dataTerms(); track t.id) {
             <option [value]="t.id" [selected]="t.id === state.termId()">
               {{ label(t.academicYear, 0) }}{{ t.isCurrent ? ' (ปัจจุบัน)' : '' }}{{ t.isPublished ? ' · เผยแพร่แล้ว' : '' }}
             </option>
           }
-        </select>
-      </label>
+          </select>
+        </label>
+        <label class="field">ฝ่าย
+          <select class="select" (change)="departmentId.set(+$any($event.target).value)">
+            <option value="0">ทุกฝ่าย</option>
+            @for (d of data()?.departments ?? []; track d.id) { <option [value]="d.id">{{ d.name }}</option> }
+          </select>
+        </label>
+        <button class="btn ghost" (click)="exportExcel()" [disabled]="!data()">⬇ ส่งออก Excel</button>
+      </div>
     </div>
 
     @if (error()) {
@@ -48,7 +58,7 @@ import { apiError } from '../../core/api-error';
       </div>
 
       <div class="grid">
-        @for (d of data()!.departments; track d.id) {
+        @for (d of visibleDepartments(); track d.id) {
           <div class="card dept" [class.done]="d.total > 0 && d.filled === d.total">
             <div class="dept-head">
               <strong>{{ d.name }}</strong>
@@ -94,6 +104,26 @@ import { apiError } from '../../core/api-error';
                 </ul>
               </details>
             }
+            @if (d.incomplete.length) {
+              <details class="incomplete">
+                <summary>ข้อมูลไม่สมบูรณ์ ({{ d.incomplete.length }})</summary>
+                <ul>
+                  @for (m of d.incomplete; track m.id) {
+                    <li><a [routerLink]="['/admin/topics', m.id, 'data']">{{ m.title }}</a><span class="muted small"> · {{ m.reason }}</span></li>
+                  }
+                </ul>
+              </details>
+            }
+            @if (d.stale.length) {
+              <details class="stale">
+                <summary>ไม่ได้อัปเดตเกิน 180 วัน ({{ d.stale.length }})</summary>
+                <ul>
+                  @for (m of d.stale; track m.id) {
+                    <li><a [routerLink]="['/admin/topics', m.id, 'data']">{{ m.title }}</a><span class="muted small"> · {{ m.updatedAt }}</span></li>
+                  }
+                </ul>
+              </details>
+            }
             <button class="btn ghost sm" (click)="openDept(d)">ดูหัวข้อของฝ่ายนี้</button>
           </div>
         }
@@ -102,8 +132,11 @@ import { apiError } from '../../core/api-error';
   `,
   styles: `
     .unchecked summary { color: #b45309; }
+    .incomplete summary { color: #b91c1c; }
+    .stale summary { color: #7c3aed; }
     .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
     .head p { margin: 0; }
+    .filters { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
     .total { display: flex; gap: 20px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
     .ring { --p: 0; width: 88px; height: 88px; border-radius: 50%; display: grid; place-items: center; flex: none; box-shadow: inset 0 0 0 1px rgb(18 52 90 / .05);
       background: conic-gradient(var(--blue-700) calc(var(--p) * 1%), var(--blue-100) 0); }
@@ -135,7 +168,13 @@ export class OverviewPage {
 
   data = signal<ProgressResponse | null>(null);
   error = signal('');
+  departmentId = signal(0);
   label = periodLabel;
+  visibleDepartments = computed(() => {
+    const rows = this.data()?.departments ?? [];
+    const id = this.departmentId();
+    return id ? rows.filter((d) => d.id === id) : rows;
+  });
 
   totalTopics = computed(() => (this.data()?.departments ?? []).reduce((s, d) => s + d.total, 0));
   totalFilled = computed(() => (this.data()?.departments ?? []).reduce((s, d) => s + d.filled, 0));
@@ -164,5 +203,26 @@ export class OverviewPage {
   openDept(d: DeptProgress) {
     this.state.deptId.set(d.id);
     this.router.navigateByUrl('/admin');
+  }
+
+  exportExcel() {
+    const data = this.data();
+    if (!data) return;
+    const depts = this.visibleDepartments();
+    const issueRows: (string | number | null)[][] = [['ฝ่าย', 'สถานะ', 'หัวข้อ', 'หมวด', 'รายละเอียด']];
+    for (const d of depts) {
+      d.missing.forEach((x) => issueRows.push([d.name, 'ยังไม่กรอก', x.title, x.chapter, '']));
+      d.incomplete.forEach((x) => issueRows.push([d.name, 'ข้อมูลไม่สมบูรณ์', x.title, x.chapter, x.reason]));
+      d.stale.forEach((x) => issueRows.push([d.name, 'ไม่ได้อัปเดตเกิน 180 วัน', x.title, x.chapter, x.updatedAt]));
+      d.unchecked.forEach((x) => issueRows.push([d.name, 'คัดลอกมา ยังไม่ตรวจ', x.title, x.chapter, `จาก${x.copiedFrom}`]));
+    }
+    downloadXlsx(`ภาพรวมการกรอกข้อมูล-${data.academicYear}.xlsx`, [
+      { name: 'สรุป', rows: [
+        ['ภาพรวมการกรอกข้อมูล', `ปีการศึกษา ${data.academicYear}`],
+        ['ฝ่าย', 'กรอกแล้ว', 'หัวข้อทั้งหมด', 'คงเหลือ', 'ไม่สมบูรณ์', 'เกิน 180 วัน', 'แก้ไขล่าสุด'],
+        ...depts.map((d) => [d.name, d.filled, d.total, d.total-d.filled, d.incomplete.length, d.stale.length, d.lastUpdatedAt]),
+      ], styles: {0:'title',1:'head'}, widths: [34,14,16,12,16,16,22] },
+      { name: 'รายการที่ต้องตรวจ', rows: issueRows, styles: {0:'head'}, widths: [30,24,55,28,35] },
+    ]);
   }
 }

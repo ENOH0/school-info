@@ -28,6 +28,9 @@
         @if (s.group && (i === 0 || s.group !== view()!.sections[i - 1].group)) {
           <div class="pt-group">{{ s.group }}</div>
         }
+        @if (s.subgroup && (i === 0 || s.subgroup !== view()!.sections[i - 1].subgroup || s.group !== view()!.sections[i - 1].group)) {
+          <div class="pt-subgroup">{{ s.subgroup }}</div>
+        }
         <div class="pt-item">{{ s.titleText }}</div>
       }
     </section>
@@ -99,26 +102,66 @@
   <div class="container layout">
     <!-- สารบัญ -->
     <aside class="toc">
-      <div class="toc-title">สารบัญ</div>
-      @if (auth.user()) {
-        <a class="raw-doc-link" routerLink="/admin/raw-documents" [queryParams]="{ year: b.academicYear }">
-          <span class="raw-doc-icon">📎</span>
-          <span><strong>ข้อมูลดิบของปีนี้</strong><small>ปีการศึกษา {{ b.academicYear }}</small></span>
-        </a>
-      }
-      <nav>
-        @for (s of view()!.sections; track s.id; let i = $index) {
-          @if (s.group && (i === 0 || s.group !== view()!.sections[i - 1].group)) {
-            <div class="toc-group">{{ s.group }}</div>
-          }
-          <button class="toc-item" [class.dim]="hasQuery() && s.hits === 0" (click)="goSection(s)">
-            <span>{{ s.titleText }}</span>
-            @if (hasQuery() && s.hits > 0) {
-              <span class="hits">{{ s.hits }}</span>
-            }
-          </button>
+      <div class="toc-head">
+        <div class="toc-heading">
+          <span><strong>สารบัญ</strong><small>{{ view()!.sections.length }} หัวข้อ</small></span>
+        </div>
+        <button
+          class="toc-mobile-toggle"
+          type="button"
+          [class.open]="mobileTocOpen()"
+          [attr.aria-expanded]="mobileTocOpen()"
+          aria-controls="book-toc-panel"
+          (click)="mobileTocOpen.set(!mobileTocOpen())"
+        >
+          {{ mobileTocOpen() ? 'ซ่อน' : 'เปิด' }}สารบัญ <span aria-hidden="true">⌄</span>
+        </button>
+      </div>
+      <div id="book-toc-panel" class="toc-panel" [class.mobile-open]="mobileTocOpen()">
+        @if (auth.user()) {
+          <a class="raw-doc-link" routerLink="/admin/raw-documents" [queryParams]="{ year: b.academicYear }">
+            <span class="raw-doc-icon">📎</span>
+            <span><strong>ข้อมูลดิบของปีนี้</strong><small>ปีการศึกษา {{ b.academicYear }}</small></span>
+          </a>
         }
-      </nav>
+        <nav>
+          @for (s of view()!.sections; track s.id; let i = $index) {
+            @if (s.group && (i === 0 || s.group !== view()!.sections[i - 1].group)) {
+              <button
+                class="toc-group"
+                type="button"
+                [class.open]="isChapterOpen(s) || hasQuery()"
+                [attr.aria-expanded]="isChapterOpen(s) || hasQuery()"
+                (click)="toggleChapter(s)"
+              >
+                <span>{{ s.group }}</span>
+                <span class="toc-group-meta"><small>{{ chapterCount(s.group) }}</small><span class="toc-chevron" aria-hidden="true">›</span></span>
+              </button>
+            }
+            @if (isChapterOpen(s) || hasQuery()) {
+              @if (s.subgroup && (i === 0 || s.subgroup !== view()!.sections[i - 1].subgroup || s.group !== view()!.sections[i - 1].group)) {
+                <button
+                  class="toc-subgroup"
+                  type="button"
+                  [class.open]="isSubgroupOpen(s) || hasQuery()"
+                  [attr.aria-expanded]="isSubgroupOpen(s) || hasQuery()"
+                  (click)="toggleSubgroup(s)"
+                >
+                  <span>{{ s.subgroup }}</span><span class="toc-chevron" aria-hidden="true">›</span>
+                </button>
+              }
+              @if (!s.subgroup || isSubgroupOpen(s) || hasQuery()) {
+                <button class="toc-item" [class.nested]="!!s.subgroup" [class.dim]="hasQuery() && s.hits === 0" (click)="goSection(s)">
+                  <span>{{ s.titleText }}</span>
+                  @if (hasQuery() && s.hits > 0) {
+                    <span class="hits">{{ s.hits }}</span>
+                  }
+                </button>
+              }
+            }
+          }
+        </nav>
+      </div>
     </aside>
 
     <!-- เนื้อหา -->
@@ -136,7 +179,9 @@
               <app-chart [data]="blk.chart" />
             } @else if (blk.type === 'img') {
               <figure class="fig">
-                <a [href]="blk.src" target="_blank" rel="noopener"><img [src]="blk.src" [alt]="blk.alt" loading="lazy" /></a>
+                <button type="button" class="fig-open" (click)="openImage(blk.src, blk.alt)" [attr.aria-label]="'ขยายรูป ' + (blk.alt || 'รูปภาพประกอบ')">
+                  <img [src]="blk.src" [alt]="blk.alt" loading="lazy" />
+                </button>
                 @if (blk.caption.length) {
                   <figcaption><app-hl [segs]="blk.caption" [current]="current()" /></figcaption>
                 }
@@ -185,5 +230,12 @@
         <p class="state">เล่มนี้กำลังรวบรวมข้อมูล ยังไม่มีฝ่ายใดกรอกข้อมูลของปีการศึกษานี้</p>
       }
     </article>
+  </div>
+}
+
+@if (previewImage(); as image) {
+  <div class="image-lightbox" role="dialog" aria-modal="true" aria-label="ดูรูปขนาดใหญ่" (click)="closeImage()">
+    <button type="button" class="lightbox-close" aria-label="ปิดรูปขนาดใหญ่" (click)="closeImage()">×</button>
+    <img [src]="image.src" [alt]="image.alt" (click)="$event.stopPropagation()" />
   </div>
 }

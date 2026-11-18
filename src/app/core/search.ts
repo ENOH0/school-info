@@ -30,6 +30,7 @@ export interface Cell {
 export interface SectionView {
   id: string;
   group: string;
+  subgroup: string;
   title: Seg[];
   titleText: string;
   blocks: BlockView[];
@@ -115,7 +116,7 @@ export function buildView(book: Book, query: string): BookView {
     const start = c.n;
     const title = split(s.title, q, c);
     const blocks = s.blocks.flatMap((b) => blockViews(b, q, c));
-    return { id: s.id, group: s.group ?? '', title, titleText: s.title, blocks, hits: c.n - start };
+    return { id: s.id, group: s.group ?? '', subgroup: s.subgroup ?? '', title, titleText: s.title, blocks, hits: c.n - start };
   });
 
   return { sections, total: c.n };

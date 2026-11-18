@@ -1,3 +1,3 @@
 <?php
 require __DIR__.'/lib.php';require __DIR__.'/raw-document-lib.php';require_method('POST');$me=require_login();$in=read_json();$r=find_raw_document($in['id']??0);require_raw_document_edit($me,$r);
-db()->prepare('UPDATE raw_documents SET deleted_at=NOW(),deleted_by=? WHERE id=? AND deleted_at IS NULL')->execute([(int)$me['id'],(int)$r['id']]);json_out(['ok'=>true]);
+$before=['description'=>$r['description'],'senderName'=>$r['sender_name'],'deletedAt'=>$r['deleted_at']];db()->beginTransaction();try{db()->prepare('UPDATE raw_documents SET deleted_at=NOW(),deleted_by=? WHERE id=? AND deleted_at IS NULL')->execute([(int)$me['id'],(int)$r['id']]);audit_log($me,'delete','raw_document',$r['id'],$r['department_id'],null,$r['academic_year'],$r['original_name'],$before,null);db()->commit();}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();throw $e;}json_out(['ok'=>true]);

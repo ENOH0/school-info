@@ -21,6 +21,7 @@ export interface Book extends BookSummary {
 export interface Section {
   id: string;
   group?: string; // ชื่อฝ่ายที่เป็นเจ้าของหัวข้อ
+  subgroup?: string; // ป้ายแบ่งหมวดย่อยในสารบัญ (ไม่แสดงในเนื้อหาหน้าเล่ม)
   title: string;
   blocks: Block[];
 }

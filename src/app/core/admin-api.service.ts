@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { ChartConfig, Column, CopyResult, Department, ImageItem, ProgressResponse, RawDocument, RecordResponse, Row, Term, Topic, TopicDetail, TopicKind, UserRow } from './admin.model';
+import { AuditLog, ChartConfig, Column, CopyResult, Department, ImageItem, ProgressResponse, RawDocument, RecordResponse, Row, Term, Topic, TopicDetail, TopicKind, UserRow } from './admin.model';
 
 type Ok = { ok: true; id?: number };
 
@@ -26,6 +26,9 @@ export class AdminApi {
 
   progress(year: number) {
     return this.http.get<ProgressResponse>('api/progress.php', { params: { year } });
+  }
+  auditLogs(year = 0, departmentId = 0) {
+    return this.http.get<AuditLog[]>('api/audit-logs.php', { params: { year, department_id: departmentId } });
   }
 
   // ----- หัวข้อ -----

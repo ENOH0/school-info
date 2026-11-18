@@ -24,6 +24,7 @@ export const routes: Routes = [
       { path: 'account', loadComponent: () => import('./pages/admin/account-page').then((m) => m.AccountPage), title: page('บัญชีของฉัน') },
       { path: 'raw-documents', loadComponent: () => import('./pages/admin/raw-documents-page').then((m) => m.RawDocumentsPage), title: page('ข้อมูลดิบของฝ่าย') },
       { path: 'overview', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/overview-page').then((m) => m.OverviewPage), title: page('ภาพรวม') },
+      { path: 'audit-log', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/audit-log-page').then((m) => m.AuditLogPage), title: page('ประวัติการแก้ไข') },
       { path: 'terms', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/terms-page').then((m) => m.TermsPage), title: page('ปีการศึกษา') },
       { path: 'users', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/users-page').then((m) => m.UsersPage), title: page('ผู้ใช้') },
       { path: 'backup', canActivate: [adminGuard], loadComponent: () => import('./pages/admin/backup-page').then((m) => m.BackupPage), title: page('สำรองข้อมูล') },

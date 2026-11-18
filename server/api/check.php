@@ -28,7 +28,7 @@ if ($hasConfig && extension_loaded('pdo_mysql')) {
         require __DIR__ . '/config.php';
         $pdo = db();
         $dbOk = true;
-        $need = ['departments', 'terms', 'users', 'topics', 'records', 'raw_documents'];
+        $need = ['departments', 'terms', 'users', 'topics', 'records', 'raw_documents', 'audit_logs'];
         $have = $pdo->query('SHOW TABLES')->fetchAll(PDO::FETCH_COLUMN);
         $tablesOk = count(array_diff($need, $have)) === 0;
         $throttleOk = in_array('login_attempts', $have, true);

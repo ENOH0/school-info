@@ -87,25 +87,39 @@ if (count($images) > 0) {
 }
 
 // ===== บันทึก: มีแล้วแก้ ไม่มีเพิ่ม ว่างลบ =====
-$find = db()->prepare('SELECT id FROM records WHERE topic_id = ? AND academic_year = ? AND term = ?');
+$find = db()->prepare('SELECT id, data_json FROM records WHERE topic_id = ? AND academic_year = ? AND term = ?');
 $find->execute([(int) $topic['id'], $year, $term]);
-$recordId = $find->fetchColumn();
+$existing = $find->fetch();
+$recordId = $existing ? (int)$existing['id'] : 0;
+$beforeData = $existing ? json_decode($existing['data_json'], true) : null;
 
 if ($empty) {
     if ($recordId) {
-        db()->prepare('DELETE FROM records WHERE id = ?')->execute([(int) $recordId]);
+        db()->beginTransaction();
+        try {
+            db()->prepare('DELETE FROM records WHERE id = ?')->execute([(int) $recordId]);
+            audit_log($me, 'delete', 'record', $recordId, $topic['department_id'], $topic['id'], $year, $topic['title'], $beforeData, null);
+            db()->commit();
+        } catch (Throwable $e) { if (db()->inTransaction()) db()->rollBack(); throw $e; }
     }
     json_out(['ok' => true, 'deleted' => true]);
 }
 
 $json = json_encode($data, JSON_UNESCAPED_UNICODE);
+db()->beginTransaction();
+try {
 if ($recordId) {
     db()->prepare('UPDATE records SET data_json = ?, updated_by = ?, updated_at = ? WHERE id = ?')
         ->execute([$json, (int) $me['id'], now_str(), (int) $recordId]);
+    audit_log($me, 'update', 'record', $recordId, $topic['department_id'], $topic['id'], $year, $topic['title'], $beforeData, $data);
 } else {
     db()->prepare(
         'INSERT INTO records (topic_id, academic_year, term, data_json, updated_by, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
     )->execute([(int) $topic['id'], $year, $term, $json, (int) $me['id'], now_str()]);
+    $recordId = (int)db()->lastInsertId();
+    audit_log($me, 'create', 'record', $recordId, $topic['department_id'], $topic['id'], $year, $topic['title'], null, $data);
 }
+db()->commit();
+} catch (Throwable $e) { if (db()->inTransaction()) db()->rollBack(); throw $e; }
 
 json_out(['ok' => true, 'deleted' => false, 'updatedAt' => now_str()]);

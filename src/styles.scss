@@ -1,7 +1,7 @@
 // ฟอนต์ราชการฝังมากับเว็บ ไม่ต้องติดตั้งในเครื่องผู้ใช้
 @font-face {
   font-family: 'TH Sarabun PSK';
-  src: url('/fonts/THSarabunPSKRegular.ttf') format('truetype');
+  src: url('./fonts/THSarabunPSKRegular.ttf') format('truetype');
   font-style: normal;
   font-weight: 400;
   size-adjust: 130%;
@@ -10,7 +10,7 @@
 
 @font-face {
   font-family: 'TH Sarabun PSK';
-  src: url('/fonts/THSarabunPSKBold.ttf') format('truetype');
+  src: url('./fonts/THSarabunPSKBold.ttf') format('truetype');
   font-style: normal;
   font-weight: 600 700;
   size-adjust: 155%;
@@ -19,7 +19,7 @@
 
 @font-face {
   font-family: 'TH Sarabun PSK';
-  src: url('/fonts/THSarabunPSKItalic.ttf') format('truetype');
+  src: url('./fonts/THSarabunPSKItalic.ttf') format('truetype');
   font-style: italic;
   font-weight: 400;
   size-adjust: 130%;
@@ -28,7 +28,7 @@
 
 @font-face {
   font-family: 'TH Sarabun PSK';
-  src: url('/fonts/THSarabunPSKBoldItalic.ttf') format('truetype');
+  src: url('./fonts/THSarabunPSKBoldItalic.ttf') format('truetype');
   font-style: italic;
   font-weight: 600 700;
   size-adjust: 130%;

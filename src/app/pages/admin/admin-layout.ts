@@ -20,8 +20,9 @@ import { apiError } from '../../core/api-error';
           <a routerLink="/admin" [class.on]="isDataPage()">{{ auth.isAdmin() ? 'ข้อมูลรายฝ่าย' : 'ข้อมูลของฝ่าย' }}</a>
           <a routerLink="/admin/raw-documents" routerLinkActive="on">ข้อมูลดิบของฝ่าย</a>
           @if (auth.isAdmin()) {
-            <a routerLink="/admin/terms" routerLinkActive="on">ปีการศึกษา</a>
+            <a routerLink="/admin/terms" routerLinkActive="on">เล่มปีการศึกษา</a>
             <a routerLink="/admin/users" routerLinkActive="on">ผู้ใช้</a>
+            <a routerLink="/admin/audit-log" routerLinkActive="on">ประวัติการแก้ไข</a>
             <a routerLink="/admin/backup" routerLinkActive="on">สำรองข้อมูล</a>
           }
         </nav>

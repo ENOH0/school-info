@@ -67,17 +67,9 @@ copy /y "server\raw-uploads\.htaccess" "%OUT%\raw-uploads\.htaccess" >nul || got
 echo.
 echo === [3/3] Copy database files and documentation ===
 mkdir "deploy\database"
-copy /y "server\database\install.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\historical-2566-2568.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\five-aspects-content-2566-2568.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\cleanup-duplicate-topics.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\annual-raw-documents.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\school-info-data-sync-2566-2569.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\chapter1-information-topics-2569.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\chapter1-backfill-2566-2568.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\add-five-information-topics.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\fill-empty-topics-five-books.sql" "deploy\database\" >nul || goto fail
-copy /y "server\database\fill-legacy-topic-gaps-five-books.sql" "deploy\database\" >nul || goto fail
+rem คัดลอก SQL ทุกไฟล์เพื่อไม่ให้ migration ที่เพิ่มใหม่ตกหล่น
+rem ตอน Deploy จริงจะรันอัตโนมัติเฉพาะไฟล์ที่ระบุใน deploy-migrations.txt
+copy /y "server\database\*.sql" "deploy\database\" >nul || goto fail
 copy /y "server\DEPLOY.md" "deploy\DEPLOY.md" >nul
 copy /y "server\SERVER-CHECKLIST.txt" "deploy\SERVER-CHECKLIST.txt" >nul
 

@@ -13,6 +13,6 @@ $description=trim(isset($_POST['description'])?(string)$_POST['description']:'')
 if(text_len($original)>255||text_len($description)>1000||text_len($sender)>150)fail('ชื่อไฟล์ คำอธิบาย หรือชื่อผู้ส่งยาวเกินกำหนด');
 $stored=bin2hex(random_bytes(20)).'.'.$ext;$dest=ensure_raw_documents_dir().'/'.$stored;
 if(!move_uploaded_file($f['tmp_name'],$dest))fail('บันทึกไฟล์ไม่สำเร็จ',500);
-try{db()->prepare('INSERT INTO raw_documents(department_id,academic_year,original_name,stored_name,mime_type,file_size,description,sender_name,uploaded_by) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$dept,$year,$original,$stored,$mime,(int)$f['size'],$description,$sender===''?null:$sender,(int)$me['id']]);}
-catch(Throwable $e){@unlink($dest);throw $e;}
-json_out(['ok'=>true,'id'=>(int)db()->lastInsertId()],201);
+try{db()->beginTransaction();db()->prepare('INSERT INTO raw_documents(department_id,academic_year,original_name,stored_name,mime_type,file_size,description,sender_name,uploaded_by) VALUES(?,?,?,?,?,?,?,?,?)')->execute([$dept,$year,$original,$stored,$mime,(int)$f['size'],$description,$sender===''?null:$sender,(int)$me['id']]);$newId=(int)db()->lastInsertId();audit_log($me,'create','raw_document',$newId,$dept,null,$year,$original,null,['description'=>$description,'senderName'=>$sender===''?null:$sender,'fileSize'=>(int)$f['size']]);db()->commit();}
+catch(Throwable $e){if(db()->inTransaction())db()->rollBack();@unlink($dest);throw $e;}
+json_out(['ok'=>true,'id'=>$newId],201);

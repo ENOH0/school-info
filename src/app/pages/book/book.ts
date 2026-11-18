@@ -34,6 +34,10 @@ export class BookPage {
   printedAt = signal('');
   query = signal(''); // คำค้น
   current = signal(0); // ตอนนี้อยู่ที่คำที่เจอลำดับไหน
+  expandedSubgroups = signal<ReadonlySet<string>>(new Set());
+  expandedChapters = signal<ReadonlySet<string>>(new Set());
+  mobileTocOpen = signal(false);
+  previewImage = signal<{ src: string; alt: string } | null>(null);
 
   // ข้อมูลพร้อมแสดงผล คำนวณใหม่อัตโนมัติเมื่อ book หรือ query เปลี่ยน
   view = computed(() => {
@@ -54,6 +58,9 @@ export class BookPage {
       this.book.set(null);
       this.error.set(false);
       this.query.set('');
+      this.expandedSubgroups.set(new Set());
+      this.expandedChapters.set(new Set());
+      this.mobileTocOpen.set(false);
       const sub = this.service.getBook(id).subscribe({
         next: (b) => this.book.set(b),
         error: () => this.error.set(true),
@@ -67,6 +74,13 @@ export class BookPage {
       if (!this.hasQuery() || this.total() === 0) return;
       const el = this.host.nativeElement.querySelector(`mark[data-hit="${i}"]`);
       el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    });
+
+    effect((onCleanup) => {
+      if (!this.previewImage() || typeof document === 'undefined') return;
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      onCleanup(() => (document.body.style.overflow = previous));
     });
   }
 
@@ -90,6 +104,14 @@ export class BookPage {
     this.searchBox()?.nativeElement.focus();
   }
 
+  openImage(src: string, alt: string) {
+    this.previewImage.set({ src, alt });
+  }
+
+  closeImage() {
+    this.previewImage.set(null);
+  }
+
   // คลิกสารบัญ: ถ้ากำลังค้นหาและหัวข้อนี้มีคำที่เจอ ให้ไปที่คำแรกของหัวข้อ ไม่อย่างนั้นไปที่หัวข้อ
   goSection(s: SectionView) {
     const sections = this.view()?.sections ?? [];
@@ -103,6 +125,38 @@ export class BookPage {
     } else {
       document.getElementById('sec-' + s.id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    if (typeof window !== 'undefined' && window.matchMedia('(max-width: 900px)').matches) {
+      this.mobileTocOpen.set(false);
+    }
+  }
+
+  chapterCount(group: string) {
+    return this.view()?.sections.filter((section) => section.group === group).length ?? 0;
+  }
+
+  isChapterOpen(s: SectionView) {
+    return this.expandedChapters().has(s.group);
+  }
+
+  toggleChapter(s: SectionView) {
+    const next = new Set(this.expandedChapters());
+    next.has(s.group) ? next.delete(s.group) : next.add(s.group);
+    this.expandedChapters.set(next);
+  }
+
+  subgroupKey(s: SectionView) {
+    return `${s.group}::${s.subgroup}`;
+  }
+
+  isSubgroupOpen(s: SectionView) {
+    return this.expandedSubgroups().has(this.subgroupKey(s));
+  }
+
+  toggleSubgroup(s: SectionView) {
+    const key = this.subgroupKey(s);
+    const next = new Set(this.expandedSubgroups());
+    next.has(key) ? next.delete(key) : next.add(key);
+    this.expandedSubgroups.set(next);
   }
 
   /** พิมพ์ / บันทึก PDF: ล้างไฮไลต์คำค้นก่อน แล้วเปิดหน้าต่างพิมพ์ของเบราว์เซอร์ (หน้าตาตอนพิมพ์อยู่ใน print.scss) */
@@ -134,6 +188,11 @@ export class BookPage {
   }
 
   onWindowKey(e: KeyboardEvent) {
+    if (e.key === 'Escape' && this.previewImage()) {
+      e.preventDefault();
+      this.closeImage();
+      return;
+    }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
       const box = this.searchBox()?.nativeElement;
       if (!box) return;
